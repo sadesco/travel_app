@@ -1,0 +1,11 @@
+sqlldr parfile=myinfo.txt control=control/user.ctl
+sqlldr parfile=myinfo.txt control=control/trips.ctl
+sqlldr parfile=myinfo.txt control=control/proposals.ctl
+sqlldr parfile=myinfo.txt control=control/cost_estimates.ctl
+sqlldr parfile=myinfo.txt control=control/itinerary_items.ctl
+sqlldr parfile=myinfo.txt control=control/lodging_details.ctl
+sqlldr parfile=myinfo.txt control=control/travel_details.ctl
+sqlldr parfile=myinfo.txt control=control/trip_members.ctl
+sqlldr parfile=myinfo.txt control=control/polls.ctl
+sqlldr parfile=myinfo.txt control=control/poll_options.ctl
+sqlldr parfile=myinfo.txt control=control/votes.ctl

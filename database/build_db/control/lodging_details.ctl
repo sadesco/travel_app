@@ -1,0 +1,12 @@
+LOAD DATA
+INFILE 'csvfiles/lodging_details.csv'
+INTO TABLE LODGING_DETAILS
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+(
+  LodgingID,
+  ProposalID,
+  Hotel_Name,
+  Address,
+  Check_In TIMESTAMP "YYYY-MM-DD HH24:MI:SS",
+  Check_Out TIMESTAMP "YYYY-MM-DD HH24:MI:SS"
+)

@@ -1,0 +1,11 @@
+LOAD DATA
+INFILE 'csvfiles/votes.csv'
+INTO TABLE VOTES
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+
+(
+  VoteID,
+  OptionID,
+  UserID,
+  Voted_At TIMESTAMP "YYYY-MM-DD HH24:MI:SS"
+)

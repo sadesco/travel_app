@@ -1,0 +1,33 @@
+DROP TABLE PROPOSALS CASCADE CONSTRAINTS;
+DROP SEQUENCE proposals_seq;
+
+CREATE TABLE PROPOSALS (
+    ProposalID NUMBER PRIMARY KEY,
+    TripID NUMBER NOT NULL,
+    Proposed_By NUMBER NOT NULL,
+    Title VARCHAR2(200) NOT NULL,
+    Description VARCHAR2(1000),
+    Category VARCHAR2(50),
+    Location VARCHAR2(200),
+    Start_Datetime TIMESTAMP,
+    End_Datetime TIMESTAMP,
+    Deadline TIMESTAMP,
+    Status VARCHAR2(20) DEFAULT 'proposed',
+    Confirmed_At TIMESTAMP,
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_prop_trip FOREIGN KEY (TripID) REFERENCES TRIPS(TripID),
+    CONSTRAINT fk_prop_user FOREIGN KEY (Proposed_By) REFERENCES USERS(UserID)
+);
+
+--generate the proposal IDs
+CREATE SEQUENCE proposals_seq START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER proposals_bir
+BEFORE INSERT ON PROPOSALS
+FOR EACH ROW
+BEGIN
+  IF :NEW.ProposalID IS NULL THEN
+    SELECT proposals_seq.NEXTVAL INTO :NEW.ProposalID FROM dual;
+  END IF;
+END;
+/

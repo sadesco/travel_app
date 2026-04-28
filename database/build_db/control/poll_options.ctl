@@ -1,0 +1,9 @@
+LOAD DATA
+INFILE 'csvfiles/poll_options.csv'
+INTO TABLE POLL_OPTIONS
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+(
+  OptionID,
+  PollID,
+  ProposalID
+)

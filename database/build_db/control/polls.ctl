@@ -1,0 +1,13 @@
+LOAD DATA
+INFILE 'csvfiles/polls.csv'
+INTO TABLE POLLS
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+(
+  PollID,
+  TripID,
+  Created_By,
+  Title,
+  Deadline TIMESTAMP "YYYY-MM-DD HH24:MI:SS",
+  Created_At TIMESTAMP "YYYY-MM-DD HH24:MI:SS",
+  Is_Open
+)

@@ -1,0 +1,12 @@
+@@crt_users.sql
+@@crt_trips.sql
+@@crt_trip_members.sql
+@@crt_proposals.sql
+@@crt_cost_estimates.sql
+@@crt_polls.sql
+@@crt_poll_options.sql
+@@crt_votes.sql
+@@crt_itinerary_items.sql
+@@crt_travel_details.sql
+@@crt_lodging_details.sql
+exit;

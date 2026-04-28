@@ -1,0 +1,25 @@
+DROP TABLE LODGING_DETAILS CASCADE CONSTRAINTS;
+DROP SEQUENCE lodging_details_seq;
+
+CREATE TABLE LODGING_DETAILS (
+    LodgingID NUMBER PRIMARY KEY,
+    ProposalID NUMBER NOT NULL,
+    Hotel_Name VARCHAR2(200),
+    Address VARCHAR2(300),
+    Check_In TIMESTAMP,
+    Check_Out TIMESTAMP,
+    CONSTRAINT fk_lodging_prop FOREIGN KEY (ProposalID) REFERENCES PROPOSALS(ProposalID)
+);
+
+-- generate the lodging ID
+CREATE SEQUENCE lodging_details_seq START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER lodging_details_bir
+BEFORE INSERT ON LODGING_DETAILS
+FOR EACH ROW
+BEGIN
+  IF :NEW.LodgingID IS NULL THEN
+    SELECT lodging_details_seq.NEXTVAL INTO :NEW.LodgingID FROM dual;
+  END IF;
+END;
+/

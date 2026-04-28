@@ -1,0 +1,10 @@
+LOAD DATA
+INFILE 'csvfiles/trip_members.csv'
+INTO TABLE TRIP_MEMBERS
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+(
+  TripID,
+  UserID,
+  Role,
+  Joined_At TIMESTAMP "YYYY-MM-DD HH24:MI:SS"
+)
