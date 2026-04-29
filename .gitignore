@@ -1,0 +1,9 @@
+# Python bytecode - compiled files
+**/__pycache__/
+*.pyc
+
+backend/venv/
+database/build_db/*.log
+
+.bashrc
+.DS_Store
