@@ -68,5 +68,9 @@ export const updateProposalStatus = async (proposal_id, status) => {
   return res.json();
 };
 
-
+// ---- Itinerary Items ----
+export const getItineraryItems = async (trip_id) => {
+  const res = await fetch(`${BASE_URL}/itinerary_items/?trip_id=${trip_id}`);
+  return res.json();
+};
 

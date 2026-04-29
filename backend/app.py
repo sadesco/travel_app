@@ -9,6 +9,7 @@ from routes.auth import auth_bp
 from routes.discover import discover_bp
 from routes.trips import trips_bp
 from routes.proposals import proposals_bp
+from routes.itinerary_items import itinerary_items_bp
 
 
 def create_app():
@@ -51,6 +52,11 @@ def create_app():
 
     try:
         app.register_blueprint(proposals_bp, url_prefix="/proposals")
+    except:
+        pass
+
+    try:
+        app.register_blueprint(itinerary_items_bp, url_prefix="/itinerary_items")
     except:
         pass
 

@@ -5,6 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.proposals import Proposal
+from models.itinerary_items import ItineraryItem
 from models.user import User
 from datetime import datetime
 
@@ -74,6 +75,18 @@ def update_status(proposal_id):
     if not proposal:
         return jsonify({"error": "Proposal not found"}), 404
     proposal.status = status
+
+    # create an itinerary item when approved
+    if status == "approved":
+        already_exists = ItineraryItem.query.filter_by(proposalid=proposal_id).first()
+        if not already_exists:
+            item = ItineraryItem(
+                tripid=proposal.tripid,
+                proposalid=proposal.proposalid,
+                sequence_order=None
+            )
+            db.session.add(item)
+
     db.session.commit()
     return jsonify({"message": "Status updated"})
 

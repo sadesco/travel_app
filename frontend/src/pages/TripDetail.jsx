@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { getProposals, updateProposalStatus } from "../api/api";
+import { getItineraryItems, getProposals, updateProposalStatus } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
@@ -20,6 +20,7 @@ export default function TripDetail({ trip, user, onBack }) {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
   const [showInvite, setShowInvite] = useState(false);
+  const [itinerary, setItinerary] = useState([]);
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
@@ -30,7 +31,12 @@ export default function TripDetail({ trip, user, onBack }) {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [trip.TRIPID]);
+  const loadItinerary = async () => {
+    const data = await getItineraryItems(trip.TRIPID);
+    setItinerary(Array.isArray(data) ? data : []);
+  }
+
+  useEffect(() => { load(); loadItinerary(); }, [trip.TRIPID]);
 
   const approved = proposals.filter(p => p.STATUS === "approved");
   const isAdmin = trip.ROLE === "admin";
@@ -171,8 +177,8 @@ export default function TripDetail({ trip, user, onBack }) {
                   {p.DESCRIPTION && <p style={styles.propDesc}>{p.DESCRIPTION}</p>}
                   {isAdmin && p.STATUS === "pending" && (
                     <div style={styles.actionRow}>
-                      <button style={styles.approveBtn} onClick={() => { updateProposalStatus(p.PROPOSALID, "approved"); load(); }}>✓ Approve</button>
-                      <button style={styles.rejectBtn} onClick={() => { updateProposalStatus(p.PROPOSALID, "rejected"); load(); }}>✗ Reject</button>
+                      <button style={styles.approveBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "approved"); await load(); }}>✓ Approve</button>
+                      <button style={styles.rejectBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "rejected"); await load(); }}>✗ Reject</button>
                     </div>
                   )}
                 </div>
@@ -194,11 +200,42 @@ export default function TripDetail({ trip, user, onBack }) {
 
         {activeTab === "Itinerary" && (
           <div>
+            <div style={styles.proposalHeader}>
             <SectionTitle>Itinerary</SectionTitle>
-            <div style={styles.emptyCard}>
-              <div style={styles.emptyIconCircle}>📍</div>
-              <p style={styles.emptyTitle}>No itinerary items yet</p>
-              <p style={styles.muted}>Approve proposals to add them to your itinerary</p>
+            <button style={styles.addBtn}>+ Add Item</button>
+            </div>
+            {itinerary.length == 0 && (
+                <div style={styles.emptyCard}>
+                  <div style={styles.emptyIconCircle}>📍</div>
+                  <p style={styles.emptyTitle}>No itinerary items yet</p>
+                  <p style={styles.muted}>Approve proposals to add them to your itinerary</p>
+                </div>
+            )}
+            <div style={styles.proposalList}>
+              {itinerary.map(item => (
+                <div key={item.itineraryid} style={styles.proposalCard}>
+                  <div style={styles.proposalTop}>
+                    <div style={styles.propIconCircle}>{CATEGORY_ICON[item.category] || "📌"}</div>
+                    <div style={{flex:1}}>
+                      <div style={styles.propTitle}>{item.title}</div>
+                      <div style={styles.propMeta}>{item.category} · {item.location}</div>
+                    </div>
+                  </div>
+                  {item.location && <p style={styles.propDetail}>📍 {item.location}</p>}
+                  {item.description && <p style={styles.propDesc}>{item.description}</p>}
+                  {item.start_datetime && (
+                    <p style={styles.propDetail}>
+                      🗓 {fmt(item.start_datetime)} — {fmt(item.end_datetime)}
+                    </p>
+                  )}
+                  {isAdmin && (
+                    <div style={styles.actionRow}>
+                      <button style={styles.approveBtn}>✏️ Edit</button>
+                      <button style={styles.rejectBtn}>🗑 Delete</button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
