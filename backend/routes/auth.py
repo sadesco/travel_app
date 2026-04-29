@@ -4,8 +4,9 @@ from db import db
 
 auth_bp = Blueprint("auth", __name__)
 
-# REGISTER ---------------------------
-
+# ----------------------
+# REGISTER
+# ----------------------
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -56,11 +57,7 @@ def register():
     user.set_password(password)
 
     db.session.add(user)
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": "Username or email already in use"}), 409
+    db.session.commit()
 
     return jsonify({
         "message": "User created",

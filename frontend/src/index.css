@@ -4,24 +4,34 @@
   --text-h: #0b0b10;
   --bg: #ffffff;
   --border: #e6e6ea;
+
   --code-bg: #f5f4f8;
+
   --accent: #8b5cf6;
   --accent-hover: #7c3aed;
+
   --accent-bg: rgba(139, 92, 246, 0.1);
+
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
   /* ===== Typography ===== */
   --sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --heading: var(--sans);
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.6;
+
   color: var(--text);
   background: var(--bg);
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   color-scheme: light dark;
 }
+
 /* ===== Dark Mode ===== */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -30,45 +40,57 @@
     --bg: #0f1115;
     --border: #2a2d36;
     --code-bg: #1a1c22;
+
     --accent: #a78bfa;
     --accent-hover: #8b5cf6;
+
     --accent-bg: rgba(167, 139, 250, 0.12);
+
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   }
 }
+
 /* ===== Layout ===== */
 body {
   margin: 0;
   background: var(--bg);
 }
+
 #root {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
+
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+
   border-inline: 1px solid var(--border);
 }
+
 /* ===== Headings ===== */
 h1, h2 {
   color: var(--text-h);
   font-weight: 600;
   margin: 0;
 }
+
 h1 {
   font-size: 40px;
   letter-spacing: -0.02em;
   margin: 24px 0;
 }
+
 h2 {
   font-size: 20px;
   margin-bottom: 8px;
 }
+
 /* ===== Text ===== */
 p {
   margin: 0;
 }
+
 /* ===== Code ===== */
 code {
   font-family: var(--mono);
@@ -78,44 +100,60 @@ code {
   font-size: 13px;
   color: var(--text-h);
 }
+
 /* ===== Buttons (IMPORTANT for your login app) ===== */
 button {
   background: var(--accent);
   color: white;
+
   border: none;
   border-radius: 10px;
+
   padding: 10px 14px;
   font-weight: 600;
+
   cursor: pointer;
+
   transition: 0.2s ease;
 }
+
 button:hover {
   background: var(--accent-hover);
 }
+
 /* ===== Inputs (LOGIN LOOK FIX) ===== */
 input {
   width: 100%;
   padding: 10px 12px;
+
   border-radius: 10px;
   border: 1px solid var(--border);
+
   background: transparent;
   color: var(--text-h);
+
   outline: none;
+
   transition: 0.2s ease;
 }
+
 input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
+
 /* ===== Login Card (this is what makes it “cute”) ===== */
 .card {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 16px;
+
   padding: 24px;
   width: 360px;
+
   box-shadow: var(--shadow);
 }
+
 /* center auth pages */
 .auth-container {
   min-height: 100vh;
@@ -123,62 +161,82 @@ input:focus {
   align-items: center;
   justify-content: center;
 }
+
+
 .auth-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+
   background: linear-gradient(135deg, #f5f7fb, #eef2ff);
 }
+
 .login-card {
   width: 360px;
   padding: 28px;
   text-align: center;
+
   border-radius: 20px;
+
   background: white;
   border: 1px solid var(--border);
+
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .login-card input {
   padding: 10px 12px;
   border-radius: 12px;
+
   border: 1px solid var(--border);
   outline: none;
+
   transition: 0.2s ease;
 }
+
 .login-card input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
+
 .login-card button {
   border-radius: 12px;
 }
+
 /* Dashboard */
+
 .dashboard {
   padding: 40px;
   max-width: 800px;
   margin: 0 auto;
 }
+
 .dashboard-header {
   text-align: left;
   margin-bottom: 30px;
 }
+
 .dashboard-header h1 {
   font-size: 32px;
   margin-bottom: 6px;
 }
+
 .dashboard-header p {
   color: var(--text);
 }
+
 /* Buttons section */
 .dashboard-actions {
   display: flex;
   gap: 12px;
   margin-bottom: 40px;
 }
+
 /* Primary button (Create Trip) */
 .primary-btn {
   background: var(--accent);
@@ -190,9 +248,11 @@ input:focus {
   cursor: pointer;
   flex: 1;
 }
+
 .primary-btn:hover {
   background: var(--accent-hover);
 }
+
 /* Secondary button (Join) */
 .secondary-btn {
   background: #f3f4f6;
@@ -201,13 +261,17 @@ input:focus {
   border-radius: 12px;
   cursor: pointer;
   flex: 1;
+
   color: var(--text-h);
   font-weight: 500;
+
   transition: 0.2s ease;
 }
+
 .secondary-btn:hover {
   background: #e5e7eb;
 }
+
 /* Logout */
 .logout-btn {
   margin-top: 40px;
@@ -216,7 +280,7 @@ input:focus {
   color: var(--text);
   cursor: pointer;
 }
+
 .logout-btn:hover {
   color: var(--text-h);
 }
-
