@@ -5,7 +5,7 @@ class ItineraryItem(db.Model):
     __tablename__ = "ITINERARY_ITEMS"
 
     itineraryid = db.Column("ITINERARYID", db.Integer, primary_key=True)
-    tripid = db.Column("TRIPID", db.Integer, db.ForeignKey('TRIPS.TRIPID'), nullable=False)
-    proposalid = db.Column("PROPOSALID", db.Integer, db.ForeignKey('PROPOSALS.PROPOSALID'), nullable=False)
+    tripid = db.Column("TRIPID", db.Integer, db.ForeignKey('TRIP.tripid'), nullable=False)
+    proposalid = db.Column("PROPOSALID", db.Integer, db.ForeignKey('PROPOSALS.proposalid'), nullable=False)
     sequence_order = db.Column("SEQUENCE_ORDER", db.Integer)
-    confirmed_at = db.Column("CONFIRMED_AT", db.DateTime, default=lambda: datetime.now(timezone.utc))
+    confirmated_at = db.Column("CONFIRMED_AT", db.DateTime, default=lambda: datetime.now(timezone.utc))
