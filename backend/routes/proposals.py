@@ -1,94 +1,81 @@
+
 from flask import Blueprint, request, jsonify
 from db import db
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models.proposals import Proposal
+from models.user import User
+from datetime import datetime
 
 proposals_bp = Blueprint("proposals", __name__)
 
-
-# GET all proposals for a trip
 @proposals_bp.route("/", methods=["GET"])
 def get_proposals():
     trip_id = request.args.get("trip_id")
     if not trip_id:
         return jsonify({"error": "trip_id required"}), 400
+    try:
+        proposals = Proposal.query.filter_by(tripid=int(trip_id)).order_by(Proposal.created_at.desc()).all()
+        result = []
+        for p in proposals:
+            user = User.query.get(p.proposed_by)
+            result.append({
+                "PROPOSALID": p.proposalid,
+                "TITLE": p.title,
+                "DESCRIPTION": p.description,
+                "CATEGORY": p.category,
+                "LOCATION": p.location,
+                "START_DATETIME": str(p.start_datetime) if p.start_datetime else None,
+                "END_DATETIME": str(p.end_datetime) if p.end_datetime else None,
+                "STATUS": p.status,
+                "CREATED_AT": str(p.created_at) if p.created_at else None,
+                "PROPOSED_BY": user.username if user else "Unknown"
+            })
+        return jsonify(result)
+    except Exception as e:
+        print("GET PROPOSALS ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
-    result = db.session.execute(db.text("""
-        SELECT p.PROPOSALID, p.TITLE, p.DESCRIPTION, p.CATEGORY,
-               p.LOCATION, p.START_DATETIME, p.END_DATETIME,
-               p.STATUS, p.CREATED_AT, u.USERNAME as PROPOSED_BY
-        FROM PROPOSALS p
-        JOIN USERS u ON p.PROPOSED_BY = u.USERID
-        WHERE p.TRIPID = :tid
-        ORDER BY p.CREATED_AT DESC
-    """), {"tid": trip_id}).fetchall()
-
-    return jsonify([dict(r._mapping) for r in result])
-
-
-# POST create a proposal
 @proposals_bp.route("/", methods=["POST"])
 def create_proposal():
     data = request.json
-    required = ["trip_id", "user_id", "title", "category"]
-    if not all(data.get(f) for f in required):
+    if not data.get("title") or not data.get("trip_id") or not data.get("user_id"):
         return jsonify({"error": "Missing required fields"}), 400
+    try:
+        start = datetime.fromisoformat(data["start_datetime"]) if data.get("start_datetime") else None
+        end   = datetime.fromisoformat(data["end_datetime"])   if data.get("end_datetime")   else None
+        proposal = Proposal(
+            tripid=int(data["trip_id"]),
+            proposed_by=int(data["user_id"]),
+            title=data["title"],
+            description=data.get("description", ""),
+            category=data.get("category", "Other"),
+            location=data.get("location", ""),
+            start_datetime=start,
+            end_datetime=end,
+            status="pending"
+        )
+        db.session.add(proposal)
+        db.session.commit()
+        return jsonify({"message": "Proposal created"}), 201
+    except Exception as e:
+        db.session.rollback()
+        print("CREATE PROPOSAL ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
-    start = data.get("start_datetime", "")
-    end   = data.get("end_datetime", "")
-
-    # build query dynamically to handle empty datetimes
-    if start and end:
-        db.session.execute(db.text("""
-            INSERT INTO PROPOSALS
-              (TRIPID, PROPOSED_BY, TITLE, DESCRIPTION, CATEGORY,
-               LOCATION, START_DATETIME, END_DATETIME, STATUS, CREATED_AT)
-            VALUES
-              (:tid, :uid, :title, :desc, :cat,
-               :loc,
-               TO_TIMESTAMP(:start, 'YYYY-MM-DD"T"HH24:MI'),
-               TO_TIMESTAMP(:end,   'YYYY-MM-DD"T"HH24:MI'),
-               'pending', SYSDATE)
-        """), {
-            "tid":   data["trip_id"],
-            "uid":   data["user_id"],
-            "title": data["title"],
-            "desc":  data.get("description", ""),
-            "cat":   data["category"],
-            "loc":   data.get("location", ""),
-            "start": start,
-            "end":   end,
-        })
-    else:
-        db.session.execute(db.text("""
-            INSERT INTO PROPOSALS
-              (TRIPID, PROPOSED_BY, TITLE, DESCRIPTION, CATEGORY,
-               LOCATION, STATUS, CREATED_AT)
-            VALUES
-              (:tid, :uid, :title, :desc, :cat,
-               :loc, 'pending', SYSDATE)
-        """), {
-            "tid":   data["trip_id"],
-            "uid":   data["user_id"],
-            "title": data["title"],
-            "desc":  data.get("description", ""),
-            "cat":   data["category"],
-            "loc":   data.get("location", ""),
-        })
-
-    db.session.commit()
-    return jsonify({"message": "Proposal created"}), 201
-
-
-# PATCH update proposal status
 @proposals_bp.route("/<int:proposal_id>/status", methods=["PATCH"])
 def update_status(proposal_id):
     data = request.json
     status = data.get("status")
     if status not in ("pending", "approved", "rejected"):
         return jsonify({"error": "Invalid status"}), 400
-
-    db.session.execute(db.text("""
-        UPDATE PROPOSALS SET STATUS = :status WHERE PROPOSALID = :pid
-    """), {"status": status, "pid": proposal_id})
+    proposal = Proposal.query.get(proposal_id)
+    if not proposal:
+        return jsonify({"error": "Proposal not found"}), 404
+    proposal.status = status
     db.session.commit()
-
     return jsonify({"message": "Status updated"})
+
+
+
