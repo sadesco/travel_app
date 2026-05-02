@@ -54,7 +54,7 @@ return <TripDetail trip={selectedTrip} user={user} onBack={() => { setSelectedTr
         <div style={styles.navLeft}>
           <div style={styles.logoCircle}>✈️</div>
           <div>
-            <div style={styles.brandScript}>Travel</div>
+            <div style={styles.brandScript}>Wanderlust</div>
             <div style={styles.brandSub}>PLAN TOGETHER</div>
           </div>
         </div>

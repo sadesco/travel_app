@@ -177,7 +177,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
         <div style={styles.navLeft}>
           <div style={styles.logoCircle}>✈️</div>
           <div>
-            <div style={styles.brandScript}>Travel</div>
+            <div style={styles.brandScript}>Wanderlust</div>
             <div style={styles.brandSub}>PLAN TOGETHER</div>
           </div>
         </div>
