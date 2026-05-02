@@ -88,7 +88,7 @@ export default function TripDetail({ trip, user, onBack }) {
           <button style={styles.inviteBtn} onClick={() => setShowInvite(!showInvite)}>
             👥 Invite Friends
           </button>
-          {showInvite && (
+fuser 8000/tcp          {showInvite && (
             <div style={styles.invitePopup}>
               Share code: <strong style={styles.codeText}>{trip.JOIN_CODE}</strong>
             </div>

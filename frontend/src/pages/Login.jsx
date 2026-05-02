@@ -15,8 +15,8 @@ function Login({ onLogin }) {
   const handleSubmit = async () => {
     try {
       const url = isSignup
-        ? "http://172.22.133.114:8005/auth/register"
-        : "http://172.22.133.114:8005/auth/login";
+        ? "http://3.95.80.50:8005/auth/register"
+        : "http://3.95.80.50:8005/auth/login";
       const body = isSignup
         ? { username, password, first_name: firstName, last_name: lastName, email }
         : { username, password };

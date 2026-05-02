@@ -1,5 +1,5 @@
 
-const BASE_URL = "http://172.22.133.114:8005";
+const BASE_URL = "http://3.95.80.50:8000";
 
 // ---- Auth ----
 export const loginUser = async (username, password) => {
