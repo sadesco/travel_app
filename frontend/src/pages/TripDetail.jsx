@@ -4,6 +4,7 @@ import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
 import InviteModal from "../components/InviteModal";
 import ExploreTab from "../components/ExploreTab";
+import EditProposalModal from "../components/EditProposalModal";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
 const TRAVEL_IMAGES = [
@@ -40,6 +41,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
   const [codeCopied, setCodeCopied] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [prefilledProposal, setPrefilledProposal] = useState(null);
+  const [editingProposal, setEditingProposal] = useState(null);
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 

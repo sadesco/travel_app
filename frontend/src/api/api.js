@@ -72,7 +72,20 @@ export const updateProposalStatus = async (proposal_id, status) => {
   });
   return res.json();
 };
+export const editProposal = async (proposal_id, data) => {
+  const res = await fetch(`${BASE_URL}/proposals/${proposal_id}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
 
+export const deleteProposal = async (proposal_id) => {
+  const res = await fetch(`${BASE_URL}/proposals/${proposal_id}`, {
+    method: "DELETE",
+  });
+  return res.json();
+};
 // ---- Itinerary ----
 export const getItinerary = async (trip_id) => {
   const res = await fetch(`${BASE_URL}/itinerary_items/?trip_id=${trip_id}`);

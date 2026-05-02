@@ -1,14 +1,23 @@
 
 import { useState } from "react";
-import { createProposal } from "../api/api";
+import { editProposal } from "../api/api";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
 const CATEGORIES = ["Activity", "Lodging", "Transportation", "Food", "Other"];
 
-export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, onClose, onCreated }) {
+export default function EditProposalModal({ proposal, tripStart, tripEnd, onClose, onSaved }) {
+  const toLocal = (dt) => {
+    if (!dt) return "";
+    return new Date(dt).toISOString().slice(0, 16);
+  };
+
   const [form, setForm] = useState({
-    title: "", category: "Activity", description: "",
-    location: "", start_datetime: "", end_datetime: ""
+    title: proposal.TITLE || "",
+    category: proposal.CATEGORY || "Activity",
+    description: proposal.DESCRIPTION || "",
+    location: proposal.LOCATION || "",
+    start_datetime: toLocal(proposal.START_DATETIME),
+    end_datetime: toLocal(proposal.END_DATETIME),
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,8 +32,6 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
       if (tripEnd && new Date(form.end_datetime) > new Date(tripEnd))
         return "End date must be within the trip dates";
     }
-    if (form.start_datetime && new Date(form.start_datetime) < new Date())
-      return "Start date should be a future date";
     return null;
   };
 
@@ -32,10 +39,10 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
     const err = validate();
     if (err) { setError(err); return; }
     setLoading(true);
-    const res = await createProposal({ ...form, trip_id: tripId, user_id: user.user_id });
+    const res = await editProposal(proposal.PROPOSALID, form);
     setLoading(false);
     if (res.error) { setError(res.error); return; }
-    onCreated();
+    onSaved();
     onClose();
   };
 
@@ -43,14 +50,14 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
     <div style={styles.overlay}>
       <div style={styles.modal}>
         <div style={styles.modalHeader}>
-          <h2 style={styles.title}>New Proposal</h2>
+          <h2 style={styles.title}>Edit Proposal</h2>
           <button style={styles.closeBtn} onClick={onClose}>×</button>
         </div>
         {error && <p style={styles.error}>{error}</p>}
 
         <label style={styles.label}>Title *</label>
-        <input style={styles.input} placeholder="e.g., Visit Senso-ji Temple"
-          value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+        <input style={styles.input} value={form.title}
+          onChange={e => setForm({...form, title: e.target.value})} />
 
         <label style={styles.label}>Category</label>
         <select style={styles.input} value={form.category}
@@ -59,13 +66,13 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
         </select>
 
         <label style={styles.label}>Location</label>
-        <input style={styles.input} placeholder="e.g., Tokyo, Japan"
-          value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
+        <input style={styles.input} value={form.location}
+          onChange={e => setForm({...form, location: e.target.value})} />
 
         <label style={styles.label}>Description</label>
         <textarea style={{...styles.input, minHeight:"80px", resize:"vertical"}}
-          placeholder="Tell the group about this idea..."
-          value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+          value={form.description}
+          onChange={e => setForm({...form, description: e.target.value})} />
 
         <div style={styles.dateRow}>
           <div style={{flex:1}}>
@@ -86,12 +93,8 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
           </div>
         </div>
 
-        {tripStart && tripEnd && (
-          <p style={styles.hint}>📅 Trip dates: {new Date(tripStart).toLocaleDateString()} — {new Date(tripEnd).toLocaleDateString()}</p>
-        )}
-
         <button style={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
-          {loading ? "Submitting..." : "Add Proposal"}
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
@@ -107,11 +110,9 @@ const styles = {
   label: { fontSize:"13px", fontWeight:500, color:C.darkBrown, display:"block", marginBottom:"4px" },
   input: { padding:"11px 14px", borderRadius:"10px", border:"1px solid #e0d8cc", fontSize:"14px", background:C.lightCream, outline:"none", width:"100%", boxSizing:"border-box", fontFamily:"inherit", color:"#444" },
   dateRow: { display:"flex", gap:"12px" },
-  hint: { fontSize:"12px", color:"#b0a090", margin:0 },
   error: { color:"#a85a5a", fontSize:"13px", margin:0, background:"#fdf0ee", padding:"8px 12px", borderRadius:"8px" },
   submitBtn: { marginTop:"4px", padding:"14px", borderRadius:"50px", border:"none", background:C.brown, color:"#fff", fontSize:"15px", fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
 };
-
 
 
 

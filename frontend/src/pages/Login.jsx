@@ -86,7 +86,7 @@ function Login({ onLogin }) {
             <label style={styles.label}>Email or Username</label>
             <div style={styles.inputWrap}>
               <span style={styles.inputIcon}>✉️</span>
-              <input style={styles.input} placeholder="Enter your email"
+              <input style={styles.input} placeholder="Enter your email or username"
                 value={username} onChange={e => setUsername(e.target.value)} />
             </div>
           </>
