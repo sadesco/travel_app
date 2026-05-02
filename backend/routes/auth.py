@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models.user import User
 from db import db
-
+from sqlalchemy import or_
 auth_bp = Blueprint("auth", __name__)
 
 # REGISTER ---------------------------
@@ -66,7 +66,10 @@ def register():
         "message": "User created",
         "user": {
             "username": user.username,
-            "user_id": user.userid
+            "user_id": user.userid,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "user_email": user.user_email
         }
     })
 
@@ -77,21 +80,20 @@ def register():
 def login():
     data = request.json
 
-    username = data.get("username")
+    identifier = data.get("username")
     password = data.get("password")
-
-    user = User.query.filter_by(username=username).first()
-
-    print("LOGIN HIT:", data)
+    
+    
+# Updated filter in auth.py
+    user = User.query.filter(or_(
+        User.username==identifier, 
+        User.user_email==identifier)).first()
     print("USER FOUND:", user)
 
-    if user:
-        print("RAW USER OBJECT:", user.__dict__)
 
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
 
-    print("PASSWORD HASH IN DB:", user.password_hash)
 
     if not user.check_password(password):
         return jsonify({"error": "Invalid credentials"}), 401
@@ -99,5 +101,9 @@ def login():
     return jsonify({
         "message": "Login successful",
         "username": user.username,
-        "user_id": user.userid
+        "user_id": user.userid,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "user_email": user.user_email
+        
     })

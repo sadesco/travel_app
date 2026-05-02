@@ -102,3 +102,21 @@ def create_trip():
         db.session.rollback()
         print("CREATE TRIP ERROR:", e)
         return jsonify({"error": str(e)}), 500
+
+# this is for the trip members page to show the members of a specific trip
+@trips_bp.route("/<int:trip_id>/members", methods=["GET"])
+def get_trip_members(trip_id):
+    try:
+        result = db.session.execute(
+            db.text("""
+                SELECT u.USERID, u.USERNAME, u.FIRST_NAME, u.LAST_NAME, tm.ROLE
+                FROM TRIP_MEMBERS tm
+                JOIN USERS u ON tm.USERID = u.USERID
+                WHERE tm.TRIPID = :trip_id
+            """),
+            {"trip_id": trip_id}
+        ).fetchall()
+        return jsonify([dict(r._mapping) for r in result])
+    except Exception as e:
+        print("GET MEMBERS ERROR:", e)
+        return jsonify({"error": str(e)}), 500

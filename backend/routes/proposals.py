@@ -31,7 +31,8 @@ def get_proposals():
                 "END_DATETIME": str(p.end_datetime) if p.end_datetime else None,
                 "STATUS": p.status,
                 "CREATED_AT": str(p.created_at) if p.created_at else None,
-                "PROPOSED_BY": user.username if user else "Unknown"
+                "PROPOSED_BY": user.username if user else "Unknown",
+                "PROPOSED_BY_ID": p.proposed_by,
             })
         return jsonify(result)
     except Exception as e:
@@ -65,30 +66,70 @@ def create_proposal():
         print("CREATE PROPOSAL ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
+@proposals_bp.route("/<int:proposal_id>", methods=["PATCH"])
+def edit_proposal(proposal_id):
+    data = request.json
+    try:
+        proposal = Proposal.query.get(proposal_id)
+        if not proposal:
+            return jsonify({"error": "Proposal not found"}), 404
+        if data.get("title"):      proposal.title = data["title"]
+        if data.get("description") is not None: proposal.description = data["description"]
+        if data.get("category"):   proposal.category = data["category"]
+        if data.get("location") is not None:    proposal.location = data["location"]
+        if data.get("start_datetime"):
+            proposal.start_datetime = datetime.fromisoformat(data["start_datetime"])
+        if data.get("end_datetime"):
+            proposal.end_datetime = datetime.fromisoformat(data["end_datetime"])
+        db.session.commit()
+        return jsonify({"message": "Proposal updated"})
+    except Exception as e:
+        db.session.rollback()
+        print("EDIT PROPOSAL ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+
 @proposals_bp.route("/<int:proposal_id>/status", methods=["PATCH"])
 def update_status(proposal_id):
     data = request.json
     status = data.get("status")
     if status not in ("pending", "approved", "rejected"):
         return jsonify({"error": "Invalid status"}), 400
-    proposal = Proposal.query.get(proposal_id)
-    if not proposal:
-        return jsonify({"error": "Proposal not found"}), 404
-    proposal.status = status
+    try:
+        proposal = Proposal.query.get(proposal_id)
+        if not proposal:
+            return jsonify({"error": "Proposal not found"}), 404
+        proposal.status = status
+        if status == "approved":
+            already_exists = ItineraryItem.query.filter_by(proposalid=proposal_id).first()
+            if not already_exists:
+                item = ItineraryItem(
+                    tripid=proposal.tripid,
+                    proposalid=proposal.proposalid,
+                    sequence_order=None
+                )
+                db.session.add(item)
+        db.session.commit()
+        return jsonify({"message": "Status updated"})
+    except Exception as e:
+        db.session.rollback()
+        print("UPDATE STATUS ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
-    # create an itinerary item when approved
-    if status == "approved":
-        already_exists = ItineraryItem.query.filter_by(proposalid=proposal_id).first()
-        if not already_exists:
-            item = ItineraryItem(
-                tripid=proposal.tripid,
-                proposalid=proposal.proposalid,
-                sequence_order=None
-            )
-            db.session.add(item)
-
-    db.session.commit()
-    return jsonify({"message": "Status updated"})
+@proposals_bp.route("/<int:proposal_id>", methods=["DELETE"])
+def delete_proposal(proposal_id):
+    try:
+        proposal = Proposal.query.get(proposal_id)
+        if not proposal:
+            return jsonify({"error": "Proposal not found"}), 404
+        # delete linked itinerary items first
+        ItineraryItem.query.filter_by(proposalid=proposal_id).delete()
+        db.session.delete(proposal)
+        db.session.commit()
+        return jsonify({"message": "Proposal deleted"})
+    except Exception as e:
+        db.session.rollback()
+        print("DELETE PROPOSAL ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 
