@@ -26,7 +26,9 @@ function formatDateRange(start, end) {
   return `${fmt(start)} - ${fmt(end)}`;
 }
 
-export default function Dashboard({ user, onLogout }) {
+
+
+export default function Dashboard({ user, onLogout, onOpenSettings}) {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -43,7 +45,7 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => { loadTrips(); }, []);
 
   if (selectedTrip) {
-    return <TripDetail trip={selectedTrip} user={user} onBack={() => { setSelectedTrip(null); loadTrips(); }} />;
+    return <TripDetail trip={selectedTrip} user={user} onBack={() => { setSelectedTrip(null); loadTrips(); }}  onOpenSettings={onOpenSettings}/>;
   }
 
   return (
@@ -58,7 +60,14 @@ export default function Dashboard({ user, onLogout }) {
         </div>
         <div style={styles.navRight}>
           <span style={styles.welcomeText}>Welcome, {user.username}</span>
-          <button style={styles.logoutBtn} onClick={onLogout}>Logout</button>
+            <button style={styles.logoutBtn} onClick={onLogout}>Logout</button>
+            <button style={styles.settingsBtn} onClick={onOpenSettings}>
+              <div style={{display:"flex", flexDirection:"column", gap:"4px"}}>
+                <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+                <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+                <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+              </div>
+            </button>
         </div>
       </nav>
 
@@ -137,7 +146,7 @@ const styles = {
   brandScript: { fontFamily:"'Great Vibes', cursive", fontSize:"28px", color:C2.darkBrown, lineHeight:1 },
   brandSub: { fontSize:"9px", letterSpacing:"3px", color:C2.brown, marginTop:"-2px" },
   navRight: { display:"flex", alignItems:"center", gap:"16px" },
-  welcomeText: { fontSize:"14px", color:C2.brown },
+  welcomeText: { fontSize:"14px", color:C2.brown, fontWeight:600 },
   logoutBtn: { padding:"8px 20px", borderRadius:"50px", border:`1px solid ${C2.tan}`, background:C2.lightCream, cursor:"pointer", fontSize:"13px", fontWeight:500, color:C2.darkBrown },
   main: { maxWidth:"1100px", margin:"0 auto", padding:"48px 32px" },
   heroSection: { textAlign:"center", marginBottom:"40px" },
@@ -166,6 +175,7 @@ const styles = {
   cardText: { fontSize:"13px", color:"#7a6a58", flex:1 },
   cardDivider: { height:"1px", background:"#f0ebe3", margin:"2px 0" },
   budgetText: { fontSize:"14px", fontWeight:700, color:C2.brown },
+  settingsBtn: { width:"40px", height:"40px", borderRadius:"50%", border:"none", background:C.brown, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
 };
 
 

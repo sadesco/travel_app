@@ -22,6 +22,11 @@ export const registerUser = async (data) => {
 
 // ---- Trips ----
 export const getTrips = async (user_id) => {
+  // bug protection
+  if (!user_id || user_id === "undefined") {
+    console.warn("getTrips called without valid user_id");
+    return { error: "missing user_id" };
+  }
   const res = await fetch(`${BASE_URL}/trips/?user_id=${user_id}`);
   return res.json();
 };
@@ -96,11 +101,18 @@ export const deleteItineraryItem = async (itemId) => {
 
 // ---- Trip Members ----
 
-// export const getTripMembers = async (trip_id) => {
-//   const res = await fetch(`${BASE_URL}/trip_members/?trip_id=${trip_id}`);
-//   return res.json();
-// };
+
 export const getTripMembers = async (trip_id) => {
   const res = await fetch(`${BASE_URL}/trips/${trip_id}/members`);
+  return res.json();
+};
+
+// support user to update info at settings page
+export const updateUser = async (user_id, data) => {
+  const res = await fetch(`${BASE_URL}/users/${user_id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
   return res.json();
 };

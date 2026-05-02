@@ -28,7 +28,7 @@ const Avatar = ({ name }) => {
 };
 
 
-export default function TripDetail({ trip, user, onBack }) {
+export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -134,6 +134,13 @@ export default function TripDetail({ trip, user, onBack }) {
         <div style={styles.navRight}>
           <span style={styles.welcomeText}>Welcome, {user.username}</span>
           <button style={styles.logoutBtn}>Logout</button>
+          <button style={styles.settingsBtn} onClick={onOpenSettings}>
+            <div style={{display:"flex", flexDirection:"column", gap:"4px"}}>
+              <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+              <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+              <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -382,7 +389,7 @@ export default function TripDetail({ trip, user, onBack }) {
                       <div style={{ flex: 1 }}>
                         <div style={styles.propTitle}>{m.USERNAME || m.username}</div>
                         <div style={styles.propMeta}>
-                          {m.ROLE === "admin" ? "Admin" : "Member"}
+                          {m.FIRST_NAME || m.first_name} {m.LAST_NAME || m.last_name}
                         </div>
                       </div>
                     </div>
@@ -414,10 +421,10 @@ const styles = {
   brandScript: { fontFamily:"'Great Vibes', cursive", fontSize:"28px", color:C.darkBrown, lineHeight:1 },
   brandSub: { fontSize:"9px", letterSpacing:"3px", color:C.brown, marginTop:"-2px" },
   navRight: { display:"flex", alignItems:"center", gap:"16px" },
-  welcomeText: { fontSize:"14px", color:C.brown },
+  welcomeText: { fontSize:"14px", color:C.brown, fontWeight:600},
   logoutBtn: { padding:"8px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, cursor:"pointer", fontSize:"13px", color:C.darkBrown },
   content: { maxWidth:"1100px", margin:"0 auto", padding:"32px" },
-  backBtn: { display:"inline-flex", alignItems:"center", gap:"6px", padding:"8px 16px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, cursor:"pointer", fontSize:"13px", color:C.darkBrown, marginBottom:"24px" },
+  backBtn: { display:"inline-flex", alignItems:"center", gap:"6px", padding:"8px 16px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, cursor:"pointer", fontSize:"13px", fontWeight:500, color:C.darkBrown, marginBottom:"24px" },
   hero: { position:"relative", height:"320px", borderRadius:"20px", overflow:"hidden", marginBottom:"24px" },
   heroImg: { width:"100%", height:"100%", objectFit:"cover" },
   heroOverlay: { position:"absolute", inset:0, background:"linear-gradient(to top,rgba(50,35,20,0.75) 0%,rgba(50,35,20,0.2) 60%,transparent 100%)" },
@@ -484,6 +491,7 @@ const styles = {
   progressFill: { height:"100%", background:C.tan, borderRadius:"3px" },
   catIconCircle: { width:"32px", height:"32px", borderRadius:"50%", background:"#f0ebe3", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"14px" },
   printBtn: { padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" },
+  settingsBtn: { width:"40px", height:"40px", borderRadius:"50%", border:"none", background:C.brown, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
 };
 
 
