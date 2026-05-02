@@ -45,8 +45,8 @@ export default function Dashboard({ user, onLogout, onOpenSettings}) {
   useEffect(() => { loadTrips(); }, []);
 
   if (selectedTrip) {
-    return <TripDetail trip={selectedTrip} user={user} onBack={() => { setSelectedTrip(null); loadTrips(); }}  onOpenSettings={onOpenSettings}/>;
-  }
+return <TripDetail trip={selectedTrip} user={user} onBack={() => { setSelectedTrip(null); loadTrips(); }} onOpenSettings={onOpenSettings} onLogout={onLogout} />;  
+}
 
   return (
     <div style={styles.page}>

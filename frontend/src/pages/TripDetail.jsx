@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem, getPolls, createPoll, castVote, closePoll } from "../api/api";
+import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus,
+  addItineraryItem, deleteItineraryItem, getPolls, createPoll, castVote,
+  closePoll, deleteProposal } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
 import InviteModal from "../components/InviteModal";
 import ExploreTab from "../components/ExploreTab";
 import EditProposalModal from "../components/EditProposalModal";
+import CreatePollModal from "../components/CreatePollModal";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
 const TRAVEL_IMAGES = [
@@ -29,7 +32,7 @@ const Avatar = ({ name }) => {
 };
 
 
-export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
+export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogout }) {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -180,8 +183,8 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
         </div>
         <div style={styles.navRight}>
           <span style={styles.welcomeText}>Welcome, {user.username}</span>
-          <button style={styles.logoutBtn}>Logout</button>
-          <button style={styles.settingsBtn} onClick={onOpenSettings}>
+<button style={styles.logoutBtn} onClick={onLogout}>Logout</button>
+<button style={styles.settingsBtn} onClick={onOpenSettings}>
             <div style={{display:"flex", flexDirection:"column", gap:"4px"}}>
               <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
               <div style={{width:"18px", height:"2px", background:C.lightCream, borderRadius:"2px"}} />
@@ -258,7 +261,6 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
               <div style={styles.detailGrid}>
                 {[
                   ["Join Code", trip.JOIN_CODE],
-                  ["Your Role", trip.ROLE],
                   ["Start Date", fmt(trip.START_DATE)],
                   ["End Date", fmt(trip.END_DATE)],
                 ].map(([k,v]) => (
@@ -301,13 +303,29 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
                   </div>
                   {p.LOCATION && <p style={styles.propDetail}>📍 {p.LOCATION}</p>}
                   {p.DESCRIPTION && <p style={styles.propDesc}>{p.DESCRIPTION}</p>}
-                  {isAdmin && p.STATUS === "pending" && (
-                    <div style={styles.actionRow}>
-                      <button style={styles.approveBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "approved"); loadAll(); }}>✓ Approve</button>
-                      <button style={styles.rejectBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "rejected"); loadAll(); }}>✗ Reject</button>
-                    </div>
-                  )}
-                </div>
+<div style={styles.actionRow}>
+                    {/* Admin approve/reject for pending proposals */}
+                    {p.STATUS === "pending" && (
+                    
+<div style={styles.actionRow}>
+    <button style={styles.approveBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "approved"); loadAll(); }}>✓ Approve</button>
+    <button style={styles.rejectBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "rejected"); loadAll(); }}>✗ Reject</button>
+  </div>
+)}
+                    {/* Edit — visible to the proposal author or admin */}
+                    {(isAdmin || p.PROPOSED_BY === user.username) && (
+                      <button style={styles.editBtn} onClick={() => setEditingProposal(p)}>✎ Edit</button>
+                    )}
+                    {/* Delete — visible to admin or the proposal author */}
+                    {(isAdmin || p.PROPOSED_BY === user.username) && (
+                      <button style={styles.rejectBtn} onClick={async () => {
+                        if (!window.confirm("Delete this proposal?")) return;
+                        await deleteProposal(p.PROPOSALID);
+                        loadAll();
+                      }}>🗑 Delete</button>
+                    )}
+                  </div>               
+ </div>
               ))}
             </div>
           </div>
@@ -481,6 +499,24 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
         <CreateItineraryModal user={user} tripId={trip.TRIPID}
           onClose={() => setShowItineraryModal(false)} onCreated={loadAll} />
       )}
+      {showPollModal && (
+        <CreatePollModal
+          user={user}
+          tripId={trip.TRIPID}
+          proposals={proposals}
+          onClose={() => setShowPollModal(false)}
+          onCreated={() => { loadPolls(); setShowPollModal(false); }}
+        />
+      )}
+{editingProposal && (        
+        <EditProposalModal
+          proposal={editingProposal}
+          tripStart={trip.START_DATE}
+          tripEnd={trip.END_DATE}
+          onClose={() => setEditingProposal(null)}
+          onSaved={() => { loadAll(); setEditingProposal(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -533,7 +569,8 @@ const styles = {
   divLine: { flex:1, height:"1px", background:C.tan },
   divStar: { color:C.tan, fontSize:"12px" },
   proposalHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"8px" },
-  addBtn: { padding:"10px 20px", borderRadius:"50px", border:"none", background:C.brown, color:"#fff", cursor:"pointer", fontWeight:600, fontSize:"13px", whiteSpace:"nowrap", marginTop:"8px" },
+editBtn: { padding:"6px 16px", borderRadius:"50px", border:"none", background:"#e8eef4", color:"#3a4a6a", cursor:"pointer", fontWeight:600, fontSize:"12px" },  // ← add here  
+addBtn: { padding:"10px 20px", borderRadius:"50px", border:"none", background:C.brown, color:"#fff", cursor:"pointer", fontWeight:600, fontSize:"13px", whiteSpace:"nowrap", marginTop:"8px" },
   proposalList: { display:"flex", flexDirection:"column", gap:"12px" },
   proposalCard: { background:"#fff", borderRadius:"14px", padding:"20px", border:`1px solid #ebe3d8` },
   proposalTop: { display:"flex", alignItems:"flex-start", gap:"12px", marginBottom:"8px" },
