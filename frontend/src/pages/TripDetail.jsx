@@ -11,9 +11,22 @@ const TRAVEL_IMAGES = [
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80",
   "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?w=900&q=80",
 ];
-const TABS = ["Overview", "Proposals", "Polls", "Itinerary", "Budget"];
+const TABS = ["Overview", "Proposals", "Polls", "Itinerary", "Budget", "Travelers"];
 const CATEGORY_ICON = { Activity:"⚡", Lodging:"🏨", Transportation:"✈️", Food:"🍽️", Other:"📌" };
 const STATUS_COLOR = { pending:"#c9a84c", approved:"#5a8a5a", rejected:"#a85a5a" };
+
+// Give the users a fun avatar
+const Avatar = ({ name }) => {
+  const seed = encodeURIComponent(name || "user");
+  return (
+    <img
+      src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${seed}&backgroundColor=7c6645,5c4a2a,c9b99a,c9a84c,9a7a50&shapeColor=f0ebe3,f7f4ef`}
+      alt={name}
+      style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0 }}
+    />
+  );
+};
+
 
 export default function TripDetail({ trip, user, onBack }) {
   const [proposals, setProposals] = useState([]);
@@ -304,6 +317,36 @@ export default function TripDetail({ trip, user, onBack }) {
                   <div style={styles.progressBar}><div style={{...styles.progressFill, width:"0%"}} /></div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Travelers" && (
+          <div>
+            <SectionTitle>Trip Members</SectionTitle>
+
+            <div style={styles.detailCard}>
+              <h3 style={styles.detailTitle}>Travel Group</h3>
+              <p style={styles.detailSub}>
+                {members.length} total traveler{members.length !== 1 ? "s" : ""}
+              </p>
+
+              <div style={styles.proposalList}>
+                {members.map((m) => (
+                  <div key={m.USERID} style={styles.proposalCard}>
+                    <div style={styles.proposalTop}>
+                      <Avatar name={m.USERNAME || m.username} />
+
+                      <div style={{ flex: 1 }}>
+                        <div style={styles.propTitle}>{m.USERNAME || m.username}</div>
+                        <div style={styles.propMeta}>
+                          {m.ROLE === "admin" ? "Admin" : "Member"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

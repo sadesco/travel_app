@@ -96,7 +96,11 @@ export const deleteItineraryItem = async (itemId) => {
 
 // ---- Trip Members ----
 
+// export const getTripMembers = async (trip_id) => {
+//   const res = await fetch(`${BASE_URL}/trip_members/?trip_id=${trip_id}`);
+//   return res.json();
+// };
 export const getTripMembers = async (trip_id) => {
-  const res = await fetch(`${BASE_URL}/trip_members/?trip_id=${trip_id}`);
+  const res = await fetch(`${BASE_URL}/trips/${trip_id}/members`);
   return res.json();
 };
