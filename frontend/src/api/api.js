@@ -129,3 +129,37 @@ export const updateUser = async (user_id, data) => {
   });
   return res.json();
 };
+
+// -- Poll + votes --
+export const getPolls = async (trip_id) => {
+  const res = await fetch(`${BASE_URL}/trips/${trip_id}/polls`, { credentials: "include" });
+  return res.json();
+};
+
+export const createPoll = async (trip_id, payload) => {
+  const res = await fetch(`${BASE_URL}/trips/${trip_id}/polls`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const castVote = async (poll_id, option_id) => {
+  const res = await fetch(`${BASE_URL}/polls/${poll_id}/vote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ option_id }),
+  });
+  return res.json();
+};
+
+export const closePoll = async (poll_id) => {
+  const res = await fetch(`${BASE_URL}/polls/${poll_id}/close`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+  return res.json();
+}

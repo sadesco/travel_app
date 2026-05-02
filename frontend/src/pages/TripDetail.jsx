@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem } from "../api/api";
+import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem, getPolls, createPoll, castVote, closePoll } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
 import InviteModal from "../components/InviteModal";
@@ -42,6 +42,12 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [prefilledProposal, setPrefilledProposal] = useState(null);
   const [editingProposal, setEditingProposal] = useState(null);
+  const [polls, setPolls] = useState([]);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [newPollTitle, setNewPollTitle] = useState("");
+  const [newPollDeadline, setNewPollDeadline] = useState("");
+  const [newPollProposalIds, setNewPollProposalIds] = useState([]);
+  const [selectedVotes, setSelectedVotes] = useState({});  // { [poll_id]: option_id }
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
@@ -62,8 +68,13 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
     setMembers(Array.isArray(data) ? data : []);
   };
 
+  const loadPolls = async () => {
+    const data = await getPolls(trip.TRIPID);
+    setPolls(Array.isArray(data) ? data : []);
+  };
+
   const loadAll = async () => {
-    await Promise.all([load(), loadItinerary(), loadMembers()]);
+    await Promise.all([load(), loadItinerary(), loadMembers(), loadPolls()]);
   };
 
   useEffect(() => { loadAll(); }, [trip.TRIPID]);
@@ -304,12 +315,19 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
 
         {activeTab === "Polls" && (
           <div>
-            <SectionTitle>Active Polls</SectionTitle>
-            <div style={styles.emptyCard}>
-              <div style={styles.emptyIconCircle}>☑️</div>
-              <p style={styles.emptyTitle}>No active polls</p>
-              <p style={styles.muted}>Polls will appear here when created</p>
+            <div style={styles.proposalHeader}>
+              <SectionTitle>Polls</SectionTitle>
+              <button style={styles.addBtn} onClick={() => setShowPollModal(true)}>+ New Poll</button>
             </div>
+
+            {polls.length === 0 && (
+              <div style={styles.emptyCard}>
+                <div style={styles.emptyIconCircle}>☑️</div>
+                <p style={styles.emptyTitle}>No polls yet</p>
+                <p style={styles.muted}>Create a poll to let the group vote on proposals</p>
+              </div>
+            )}
+            
           </div>
         )}
 
@@ -546,4 +564,5 @@ const styles = {
   catIconCircle: { width:"32px", height:"32px", borderRadius:"50%", background:"#f0ebe3", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"14px" },
   printBtn: { padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" },
   settingsBtn: { width:"40px", height:"40px", borderRadius:"50%", border:"none", background:C.brown, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
+  formInput: { width: "100%", padding: "10px 14px", borderRadius: "10px", border: `1px solid ${C.tan}`, background: "#fff", fontSize: "14px", color: C.darkBrown, fontFamily: "inherit", boxSizing: "border-box" },
 };
