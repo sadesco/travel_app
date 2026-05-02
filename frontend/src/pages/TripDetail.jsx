@@ -4,6 +4,7 @@ import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, 
 import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
 import InviteModal from "../components/InviteModal";
+import ExploreTab from "../components/ExploreTab";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
 const TRAVEL_IMAGES = [
@@ -12,7 +13,7 @@ const TRAVEL_IMAGES = [
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80",
   "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?w=900&q=80",
 ];
-const TABS = ["Overview", "Proposals", "Polls", "Itinerary", "Budget", "Travelers"];
+const TABS = ["Overview", "Proposals", "Polls", "Itinerary", "Budget", "Travelers", "Explore"];
 const CATEGORY_ICON = { Activity:"⚡", Lodging:"🏨", Transportation:"✈️", Food:"🍽️", Other:"📌" };
 const STATUS_COLOR = { pending:"#c9a84c", approved:"#5a8a5a", rejected:"#a85a5a" };
 
@@ -409,7 +410,12 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
             </div>
           </div>
         )}
+ 
+      {activeTab === "Explore" && (
+        <ExploreTab trip={trip} />
+      )}
       </div>
+
 
       {showModal && (
         <CreateProposalModal user={user} tripId={trip.TRIPID}
@@ -503,6 +509,3 @@ const styles = {
   printBtn: { padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" },
   settingsBtn: { width:"40px", height:"40px", borderRadius:"50%", border:"none", background:C.brown, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
 };
-
-
-
