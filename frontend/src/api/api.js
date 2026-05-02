@@ -68,9 +68,35 @@ export const updateProposalStatus = async (proposal_id, status) => {
   return res.json();
 };
 
-// ---- Itinerary Items ----
+// ---- Itinerary ----
+export const getItinerary = async (trip_id) => {
+  const res = await fetch(`${BASE_URL}/itinerary_items/?trip_id=${trip_id}`);
+  return res.json();
+};
+
 export const getItineraryItems = async (trip_id) => {
   const res = await fetch(`${BASE_URL}/itinerary_items/?trip_id=${trip_id}`);
   return res.json();
 };
 
+export const addItineraryItem = async (data) => {
+  const res = await fetch(`${BASE_URL}/itinerary_items/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+export const deleteItineraryItem = async (itemId) => {
+  const res = await fetch(`${BASE_URL}/itinerary_items/${itemId}`, {
+    method: "DELETE",
+  });
+  return res.json();
+};
+
+// ---- Trip Members ----
+
+export const getTripMembers = async (trip_id) => {
+  const res = await fetch(`${BASE_URL}/trip_members/?trip_id=${trip_id}`);
+  return res.json();
+};

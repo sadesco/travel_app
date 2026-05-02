@@ -1,7 +1,8 @@
 
 import { useEffect, useState } from "react";
-import { getItineraryItems, getProposals, updateProposalStatus } from "../api/api";
+import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
+import CreateItineraryModal from "../components/CreateItineraryModal";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
 const TRAVEL_IMAGES = [
@@ -18,9 +19,12 @@ export default function TripDetail({ trip, user, onBack }) {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
   const [showInvite, setShowInvite] = useState(false);
   const [itinerary, setItinerary] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
@@ -34,14 +38,29 @@ export default function TripDetail({ trip, user, onBack }) {
   const loadItinerary = async () => {
     const data = await getItineraryItems(trip.TRIPID);
     setItinerary(Array.isArray(data) ? data : []);
-  }
+  };
 
-  useEffect(() => { load(); loadItinerary(); }, [trip.TRIPID]);
+  const loadMembers = async () => {
+    const data = await getTripMembers(trip.TRIPID);
+    setMembers(Array.isArray(data) ? data : []);
+  };
+
+  const loadAll = async () => {
+    await Promise.all([load(), loadItinerary(), loadMembers()]);
+  };
+
+  useEffect(() => { loadAll(); }, [trip.TRIPID]);
 
   const approved = proposals.filter(p => p.STATUS === "approved");
   const isAdmin = trip.ROLE === "admin";
 
   const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(trip.JOIN_CODE);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
 
   const SectionTitle = ({ children }) => (
     <div style={styles.sectionTitleWrap}>
@@ -79,20 +98,21 @@ export default function TripDetail({ trip, user, onBack }) {
             <div style={styles.heroMeta}>
               <span>📍 {trip.DESTINATION || "—"}</span>
               <span>📅 {fmt(trip.START_DATE)} - {fmt(trip.END_DATE)}</span>
-              <span>👥 1 travelers</span>
+              <span>👥 {members.length || 1} travelers</span>
             </div>
           </div>
         </div>
 
         <div style={styles.inviteRow}>
-          <button style={styles.inviteBtn} onClick={() => setShowInvite(!showInvite)}>
+          <button style={styles.inviteBtn} onClick={copyCode}>
             👥 Invite Friends
           </button>
-fuser 8000/tcp          {showInvite && (
-            <div style={styles.invitePopup}>
-              Share code: <strong style={styles.codeText}>{trip.JOIN_CODE}</strong>
-            </div>
-          )}
+          <div style={styles.codeBox}>
+            Share code: <strong style={styles.codeText}>{trip.JOIN_CODE}</strong>
+            <button style={styles.copyBtn} onClick={copyCode}>
+              {codeCopied ? "✓ Copied!" : "Copy"}
+            </button>
+          </div>
         </div>
 
         <div style={styles.tabBar}>
@@ -110,7 +130,7 @@ fuser 8000/tcp          {showInvite && (
             <div style={styles.statsRow}>
               {[
                 { icon:"⚡", label:"Proposals", value: proposals.length, sub:`${approved.length} approved` },
-                { icon:"📍", label:"Itinerary", value: approved.length, sub:`${approved.length} activities` },
+                { icon:"📍", label:"Itinerary", value: itinerary.length, sub:`${itinerary.length} activities` },
                 { icon:"$", label:"Budget", value:`$${trip.BUDGET || "0"}`, sub:`per person / $${trip.BUDGET || "3000"}` },
               ].map(s => (
                 <div key={s.label} style={styles.statCard}>
@@ -177,8 +197,8 @@ fuser 8000/tcp          {showInvite && (
                   {p.DESCRIPTION && <p style={styles.propDesc}>{p.DESCRIPTION}</p>}
                   {isAdmin && p.STATUS === "pending" && (
                     <div style={styles.actionRow}>
-                      <button style={styles.approveBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "approved"); await load(); }}>✓ Approve</button>
-                      <button style={styles.rejectBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "rejected"); await load(); }}>✗ Reject</button>
+                      <button style={styles.approveBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "approved"); loadAll(); }}>✓ Approve</button>
+                      <button style={styles.rejectBtn} onClick={async () => { await updateProposalStatus(p.PROPOSALID, "rejected"); loadAll(); }}>✗ Reject</button>
                     </div>
                   )}
                 </div>
@@ -201,37 +221,40 @@ fuser 8000/tcp          {showInvite && (
         {activeTab === "Itinerary" && (
           <div>
             <div style={styles.proposalHeader}>
-            <SectionTitle>Itinerary</SectionTitle>
-            <button style={styles.addBtn}>+ Add Item</button>
+              <SectionTitle>Itinerary</SectionTitle>
+              <button style={styles.addBtn} onClick={() => setShowItineraryModal(true)}>+ Add Item</button>
             </div>
-            {itinerary.length == 0 && (
-                <div style={styles.emptyCard}>
-                  <div style={styles.emptyIconCircle}>📍</div>
-                  <p style={styles.emptyTitle}>No itinerary items yet</p>
-                  <p style={styles.muted}>Approve proposals to add them to your itinerary</p>
-                </div>
+            {itinerary.length === 0 && (
+              <div style={styles.emptyCard}>
+                <div style={styles.emptyIconCircle}>📍</div>
+                <p style={styles.emptyTitle}>No itinerary items yet</p>
+                <p style={styles.muted}>Add items directly or approve proposals to build your itinerary</p>
+              </div>
             )}
             <div style={styles.proposalList}>
-              {itinerary.map(item => (
-                <div key={item.itineraryid} style={styles.proposalCard}>
+              {itinerary.map((item, idx) => (
+                <div key={item.ITINERARYID} style={styles.proposalCard}>
                   <div style={styles.proposalTop}>
-                    <div style={styles.propIconCircle}>{CATEGORY_ICON[item.category] || "📌"}</div>
+                    <div style={{...styles.propIconCircle, background: C.brown, color:"#fff", fontWeight:700, fontSize:"13px"}}>
+                      {item.SEQUENCE_ORDER || idx + 1}
+                    </div>
+                    <div style={styles.propIconCircle}>{CATEGORY_ICON[item.CATEGORY] || "📌"}</div>
                     <div style={{flex:1}}>
-                      <div style={styles.propTitle}>{item.title}</div>
-                      <div style={styles.propMeta}>{item.category} · {item.location}</div>
+                      <div style={styles.propTitle}>{item.TITLE}</div>
+                      <div style={styles.propMeta}>{item.CATEGORY} · {item.LOCATION}</div>
                     </div>
                   </div>
-                  {item.location && <p style={styles.propDetail}>📍 {item.location}</p>}
-                  {item.description && <p style={styles.propDesc}>{item.description}</p>}
-                  {item.start_datetime && (
-                    <p style={styles.propDetail}>
-                      🗓 {fmt(item.start_datetime)} — {fmt(item.end_datetime)}
-                    </p>
+                  {item.LOCATION && <p style={styles.propDetail}>📍 {item.LOCATION}</p>}
+                  {item.DESCRIPTION && <p style={styles.propDesc}>{item.DESCRIPTION}</p>}
+                  {item.START_DATETIME && (
+                    <p style={styles.propDetail}>🗓 {fmt(item.START_DATETIME)} — {fmt(item.END_DATETIME)}</p>
                   )}
                   {isAdmin && (
                     <div style={styles.actionRow}>
-                      <button style={styles.approveBtn}>✏️ Edit</button>
-                      <button style={styles.rejectBtn}>🗑 Delete</button>
+                      <button style={styles.rejectBtn}
+                        onClick={async () => { await deleteItineraryItem(item.ITINERARYID); loadItinerary(); }}>
+                        🗑 Delete
+                      </button>
                     </div>
                   )}
                 </div>
@@ -288,7 +311,11 @@ fuser 8000/tcp          {showInvite && (
 
       {showModal && (
         <CreateProposalModal user={user} tripId={trip.TRIPID}
-          onClose={() => setShowModal(false)} onCreated={load} />
+          onClose={() => setShowModal(false)} onCreated={loadAll} />
+      )}
+      {showItineraryModal && (
+        <CreateItineraryModal user={user} tripId={trip.TRIPID}
+          onClose={() => setShowItineraryModal(false)} onCreated={loadAll} />
       )}
     </div>
   );
@@ -313,10 +340,11 @@ const styles = {
   heroContent: { position:"absolute", bottom:"28px", left:"32px" },
   heroTitle: { margin:"0 0 10px", fontSize:"40px", fontWeight:700, color:"#fff", fontFamily:"'Playfair Display', serif" },
   heroMeta: { display:"flex", gap:"24px", color:"rgba(255,255,255,0.85)", fontSize:"14px" },
-  inviteRow: { display:"flex", alignItems:"center", gap:"16px", marginBottom:"24px", justifyContent:"center" },
+  inviteRow: { display:"flex", alignItems:"center", gap:"12px", marginBottom:"24px", justifyContent:"center", flexWrap:"wrap" },
   inviteBtn: { padding:"10px 24px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, cursor:"pointer", fontSize:"14px", color:C.darkBrown, fontWeight:500 },
-  invitePopup: { background:"#fff", border:`1px solid ${C.tan}`, borderRadius:"10px", padding:"10px 16px", fontSize:"14px", color:C.darkBrown },
-  codeText: { fontFamily:"monospace", color:C.brown, fontSize:"16px" },
+  codeBox: { display:"flex", alignItems:"center", gap:"10px", background:"#fff", border:`1px solid ${C.tan}`, borderRadius:"50px", padding:"8px 20px", fontSize:"14px", color:C.darkBrown },
+  codeText: { fontFamily:"monospace", color:C.brown, fontSize:"16px", letterSpacing:"2px" },
+  copyBtn: { padding:"4px 12px", borderRadius:"20px", border:`1px solid ${C.tan}`, background:C.lightCream, cursor:"pointer", fontSize:"12px", color:C.darkBrown, fontWeight:500 },
   tabBar: { display:"flex", gap:"4px", background:"#fff", borderRadius:"50px", padding:"4px", marginBottom:"32px", width:"fit-content", border:`1px solid ${C.tan}` },
   tab: { padding:"8px 20px", borderRadius:"50px", border:"none", background:"transparent", cursor:"pointer", fontSize:"14px", color:C.brown, fontFamily:"inherit" },
   activeTab: { background:C.brown, color:"#fff", fontWeight:600 },
