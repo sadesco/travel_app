@@ -82,6 +82,45 @@ export default function TripDetail({ trip, user, onBack }) {
     </div>
   );
 
+  // this generates a printable view for the itinerary
+  const printItinerary = () => {
+    const win = window.open("", "_blank");
+    win.document.write(`
+      <html>
+        <head>
+          <title>${trip.TRIP_NAME} — Itinerary</title>
+          <style>
+            body { font-family: 'Georgia', serif; max-width: 700px; margin: 40px auto; color: #3a2a1a; }
+            h1 { font-size: 32px; margin-bottom: 4px; }
+            .meta { color: #888; font-size: 14px; margin-bottom: 32px; }
+            .item { border-bottom: 1px solid #e0d8cc; padding: 16px 0; display: flex; gap: 16px; }
+            .num { font-size: 20px; font-weight: bold; color: #7c6645; min-width: 28px; }
+            .title { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+            .detail { font-size: 13px; color: #888; margin: 2px 0; }
+            @media print { body { margin: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>${trip.TRIP_NAME}</h1>
+          <div class="meta">📍 ${trip.DESTINATION || ""} &nbsp;|&nbsp; 📅 ${fmt(trip.START_DATE)} — ${fmt(trip.END_DATE)}</div>
+          ${itinerary.map((item, idx) => `
+            <div class="item">
+              <div class="num">${item.SEQUENCE_ORDER || idx + 1}</div>
+              <div>
+                <div class="title">${item.TITLE}</div>
+                ${item.LOCATION ? `<div class="detail">📍 ${item.LOCATION}</div>` : ""}
+                ${item.DESCRIPTION ? `<div class="detail">${item.DESCRIPTION}</div>` : ""}
+                ${item.START_DATETIME ? `<div class="detail">🗓 ${fmt(item.START_DATETIME)}${item.END_DATETIME ? " — " + fmt(item.END_DATETIME) : ""}</div>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.print();
+  };
+
   return (
     <div style={styles.page}>
       <nav style={styles.nav}>
@@ -235,7 +274,10 @@ export default function TripDetail({ trip, user, onBack }) {
           <div>
             <div style={styles.proposalHeader}>
               <SectionTitle>Itinerary</SectionTitle>
-              <button style={styles.addBtn} onClick={() => setShowItineraryModal(true)}>+ Add Item</button>
+              <div style={{display:"flex", gap:"8px", alignItems:"center"}}>
+                <button style={{...styles.printBtn, marginTop:0}} onClick={printItinerary}>Print</button>
+                <button style={{...styles.addBtn, marginTop:0}} onClick={() => setShowItineraryModal(true)}>+ Add Item</button>
+              </div>
             </div>
             {itinerary.length === 0 && (
               <div style={styles.emptyCard}>
@@ -411,7 +453,7 @@ const styles = {
   dividerRow: { display:"flex", alignItems:"center", gap:"10px", width:"160px" },
   divLine: { flex:1, height:"1px", background:C.tan },
   divStar: { color:C.tan, fontSize:"12px" },
-  proposalHeader: { display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"8px" },
+  proposalHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"8px" },
   addBtn: { padding:"10px 20px", borderRadius:"50px", border:"none", background:C.brown, color:"#fff", cursor:"pointer", fontWeight:600, fontSize:"13px", whiteSpace:"nowrap", marginTop:"8px" },
   proposalList: { display:"flex", flexDirection:"column", gap:"12px" },
   proposalCard: { background:"#fff", borderRadius:"14px", padding:"20px", border:`1px solid #ebe3d8` },
@@ -441,6 +483,7 @@ const styles = {
   progressBar: { height:"6px", background:"#f0ebe3", borderRadius:"3px", overflow:"hidden", margin:"4px 0" },
   progressFill: { height:"100%", background:C.tan, borderRadius:"3px" },
   catIconCircle: { width:"32px", height:"32px", borderRadius:"50%", background:"#f0ebe3", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"14px" },
+  printBtn: { padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:C.lightCream, color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" },
 };
 
 
