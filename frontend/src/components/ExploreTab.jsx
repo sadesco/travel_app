@@ -78,7 +78,7 @@ export default function ExploreTab({ trip, onAddProposal }) {
   };
 
   const handleAdd = (place) => {
-    if (onAddProposal) onAddProposal(place);
+    if (onAddProposal) onAddProposal({ ...place, _category: activeCategory }); // add _category
     setAddedIds(prev => new Set([...prev, place.id]));
   };
 
@@ -170,11 +170,6 @@ export default function ExploreTab({ trip, onAddProposal }) {
                       {place.cuisine && <div style={styles.cardMeta}>{place.cuisine.replace(/_/g, " ")}</div>}
                     </div>
                   </div>
-                  <div style={styles.cardDetails}>
-                    {place.opening_hours && <div style={styles.detail}>🕐 {place.opening_hours}</div>}
-                    {place.phone && <div style={styles.detail}>📞 {place.phone}</div>}
-                    {place.website && <a href={place.website} target="_blank" rel="noreferrer" style={styles.link}>🌐 Website</a>}
-                  </div>
                   <div style={styles.cardFooter}>
                     <a
                       href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=17/${place.lat}/${place.lon}`}
@@ -188,10 +183,16 @@ export default function ExploreTab({ trip, onAddProposal }) {
                         onClick={() => handleAdd(place)}
                         disabled={addedIds.has(place.id)}
                       >
-                        {addedIds.has(place.id) ? "✓ Added" : "+ Add to Trip"}
+                        {addedIds.has(place.id) ? "✓ Added" : "＋ Propose"}
                       </button>
                     )}
                   </div>
+                  <div style={styles.cardDetails}>
+                    {place.opening_hours && <div style={styles.detail}>🕐 {place.opening_hours}</div>}
+                    {place.phone && <div style={styles.detail}>📞 {place.phone}</div>}
+                    {place.website && <a href={place.website} target="_blank" rel="noreferrer" style={styles.link}>🌐 Website</a>}
+                  </div>
+                  
                 </div>
               ))}
             </div>
@@ -235,4 +236,5 @@ const styles = {
   mapLink: { fontSize: "12px", color: C.brown, textDecoration: "none", fontWeight: 500 },
   addBtn: { padding: "6px 14px", borderRadius: "50px", border: "none", background: C.brown, color: "#fff", cursor: "pointer", fontSize: "12px", fontWeight: 600, fontFamily: "inherit" },
   addBtnDone: { background: "#5a8a5a", cursor: "default" },
+  plusBtn: { width: "28px", height: "28px", borderRadius: "50%", border: "none", background: C.brown, color: "#fff", fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 },
 };

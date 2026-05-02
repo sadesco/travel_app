@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
@@ -17,7 +16,6 @@ const TABS = ["Overview", "Proposals", "Polls", "Itinerary", "Budget", "Traveler
 const CATEGORY_ICON = { Activity:"⚡", Lodging:"🏨", Transportation:"✈️", Food:"🍽️", Other:"📌" };
 const STATUS_COLOR = { pending:"#c9a84c", approved:"#5a8a5a", rejected:"#a85a5a" };
 
-// Give the users a fun avatar
 const Avatar = ({ name }) => {
   const seed = encodeURIComponent(name || "user");
   return (
@@ -41,6 +39,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
   const [members, setMembers] = useState([]);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [prefilledProposal, setPrefilledProposal] = useState(null);
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
@@ -85,7 +84,6 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
     </div>
   );
 
-  // this generates a printable view for the itinerary
   const printItinerary = () => {
     const win = window.open("", "_blank");
     win.document.write(`
@@ -122,6 +120,39 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
     `);
     win.document.close();
     win.print();
+  };
+
+  // Derive a sensible category from the explore card's activeCategory key
+  const categoryFromPlace = (place) => {
+    const map = {
+      restaurant: "Food",
+      bar: "Food",
+      hotel: "Lodging",
+      attraction: "Activity",
+      museum: "Activity",
+      park: "Activity",
+    };
+    return map[place._category] || "Activity";
+  };
+
+  const handleExploreAdd = (place) => {
+    setPrefilledProposal({
+      title: place.name,
+      category: categoryFromPlace(place),
+      location: place.name,
+      description: [
+        place.cuisine ? `Cuisine: ${place.cuisine.replace(/_/g, " ")}` : "",
+        place.opening_hours ? `Hours: ${place.opening_hours}` : "",
+        place.phone ? `Phone: ${place.phone}` : "",
+        place.website ? `Website: ${place.website}` : "",
+      ].filter(Boolean).join("\n") || "",
+    });
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setPrefilledProposal(null);
   };
 
   return (
@@ -232,7 +263,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
           <div>
             <div style={styles.proposalHeader}>
               <SectionTitle>Proposals</SectionTitle>
-              <button style={styles.addBtn} onClick={() => setShowModal(true)}>+ New Proposal</button>
+              <button style={styles.addBtn} onClick={() => { setPrefilledProposal(null); setShowModal(true); }}>+ New Proposal</button>
             </div>
             {loading && <p style={styles.muted}>Loading...</p>}
             {!loading && proposals.length === 0 && (
@@ -384,19 +415,16 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
         {activeTab === "Travelers" && (
           <div>
             <SectionTitle>Trip Members</SectionTitle>
-
             <div style={styles.detailCard}>
               <h3 style={styles.detailTitle}>Travel Group</h3>
               <p style={styles.detailSub}>
                 {members.length} total traveler{members.length !== 1 ? "s" : ""}
               </p>
-
               <div style={styles.proposalList}>
                 {members.map((m) => (
                   <div key={m.USERID} style={styles.proposalCard}>
                     <div style={styles.proposalTop}>
                       <Avatar name={m.USERNAME || m.username} />
-
                       <div style={{ flex: 1 }}>
                         <div style={styles.propTitle}>{m.USERNAME || m.username}</div>
                         <div style={styles.propMeta}>
@@ -410,16 +438,24 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
             </div>
           </div>
         )}
- 
-      {activeTab === "Explore" && (
-        <ExploreTab trip={trip} />
-      )}
+
+        {activeTab === "Explore" && (
+          <ExploreTab
+            trip={trip}
+            user={user}
+            onAddProposal={handleExploreAdd}
+          />
+        )}
       </div>
 
-
       {showModal && (
-        <CreateProposalModal user={user} tripId={trip.TRIPID}
-          onClose={() => setShowModal(false)} onCreated={loadAll} />
+        <CreateProposalModal
+          user={user}
+          tripId={trip.TRIPID}
+          initialData={prefilledProposal}
+          onClose={handleCloseModal}
+          onCreated={() => { loadAll(); handleCloseModal(); }}
+        />
       )}
       {showItineraryModal && (
         <CreateItineraryModal user={user} tripId={trip.TRIPID}
