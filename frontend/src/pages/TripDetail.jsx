@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus, addItineraryItem, deleteItineraryItem } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
+import InviteModal from "../components/InviteModal";
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", cream: "#f0ebe3", lightCream: "#f7f4ef", tan: "#c9b99a" };
 const TRAVEL_IMAGES = [
@@ -38,6 +39,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
   const [itinerary, setItinerary] = useState([]);
   const [members, setMembers] = useState([]);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
@@ -163,9 +165,9 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
         </div>
 
         <div style={styles.inviteRow}>
-          <button style={styles.inviteBtn} onClick={copyCode}>
-            👥 Invite Friends
-          </button>
+          <button style={styles.inviteBtn} onClick={() => setShowInviteModal(true)}>
+          👥 Invite Friends
+        </button>
           <div style={styles.codeBox}>
             Share code: <strong style={styles.codeText}>{trip.JOIN_CODE}</strong>
             <button style={styles.copyBtn} onClick={copyCode}>
@@ -368,6 +370,14 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings}) {
               ))}
             </div>
           </div>
+        )}
+
+        {showInviteModal && (
+          <InviteModal
+            trip={trip}
+            user={user}
+            onClose={() => setShowInviteModal(false)}
+          />
         )}
 
         {activeTab === "Travelers" && (
