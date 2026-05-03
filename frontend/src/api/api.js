@@ -179,8 +179,9 @@ export const getBudgetSummary = async (tripId) => {
   return res.json();
 };
 
+
 export const addCostEstimate = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/budget/estimate`, {  // add /api
+  const res = await fetch(`${BASE_URL}/api/budget/estimate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
