@@ -578,7 +578,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
               <SectionTitle>Itinerary</SectionTitle>
               <div style={{display:"flex", gap:"8px", alignItems:"center"}}>
                 <button style={{...styles.printBtn, marginTop:0}} onClick={printItinerary}>Print</button>
-                <button style={{...styles.addBtn, marginTop:0}} onClick={() => setShowItineraryModal(true)}>+ Add Item</button>
+                {/* <button style={{...styles.addBtn, marginTop:0}} onClick={() => setShowItineraryModal(true)}>+ Add Item</button> */}
               </div>
             </div>
             {itinerary.length === 0 && (

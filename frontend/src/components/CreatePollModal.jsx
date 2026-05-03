@@ -60,7 +60,7 @@ export default function CreatePollModal({ user, tripId, proposals = [], onClose,
     onClose();
   };
 
-  const availableProposals = (proposals || []).filter(p => p.STATUS !== "rejected");
+  const availableProposals = (proposals || []).filter(p => p.STATUS === "pending");
 
   return (
     <div style={styles.overlay}>
