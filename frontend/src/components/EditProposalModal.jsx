@@ -6,9 +6,13 @@ const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
 const CATEGORIES = ["Activity", "Lodging", "Transportation", "Food", "Other"];
 
 export default function EditProposalModal({ proposal, tripStart, tripEnd, onClose, onSaved }) {
+  // const toLocal = (dt) => {
+  //   if (!dt) return "";
+  //   return new Date(dt).toISOString().slice(0, 16);
+  // };
   const toLocal = (dt) => {
     if (!dt) return "";
-    return new Date(dt).toISOString().slice(0, 16);
+    return dt.slice(0, 16).replace(" ", "T");
   };
 
   const [form, setForm] = useState({
@@ -24,14 +28,14 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validate = () => {
+ const validate = () => {
     if (!form.title) return "Title is required";
     if (form.start_datetime && form.end_datetime) {
       if (new Date(form.end_datetime) <= new Date(form.start_datetime))
         return "End date must be after start date";
-      if (tripStart && new Date(form.start_datetime) < new Date(tripStart))
+      if (tripStart && form.start_datetime.slice(0,10) < tripStart.slice(0,10))
         return "Start date must be within the trip dates";
-      if (tripEnd && new Date(form.end_datetime) > new Date(tripEnd))
+      if (tripEnd && form.end_datetime.slice(0,10) > tripEnd.slice(0,10))
         return "End date must be within the trip dates";
     }
     return null;
@@ -85,24 +89,26 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
           value={form.description}
           onChange={e => setForm({...form, description: e.target.value})} />
 
-        <div style={styles.dateRow}>
-          <div style={{flex:1}}>
-            <label style={styles.label}>Start</label>
-            <input style={styles.input} type="datetime-local"
-              min={tripStart ? new Date(tripStart).toISOString().slice(0,16) : ""}
-              max={tripEnd   ? new Date(tripEnd).toISOString().slice(0,16)   : ""}
-              value={form.start_datetime}
-              onChange={e => setForm({...form, start_datetime: e.target.value})} />
-          </div>
-          <div style={{flex:1}}>
-            <label style={styles.label}>End</label>
-            <input style={styles.input} type="datetime-local"
-              min={form.start_datetime || ""}
-              max={tripEnd ? new Date(tripEnd).toISOString().slice(0,16) : ""}
-              value={form.end_datetime}
-              onChange={e => setForm({...form, end_datetime: e.target.value})} />
-          </div>
-        </div>
+     <div style={styles.dateRow}>
+      <div style={{flex:1}}>
+        <label style={styles.label}>Start</label>
+        <input style={styles.input} type="datetime-local"
+          min={tripStart ? tripStart.slice(0,10) + "T00:00" : ""}
+          max={tripEnd   ? tripEnd.slice(0,10)   + "T23:59" : ""}
+          value={form.start_datetime}
+          onChange={e => setForm({...form, start_datetime: e.target.value})} />
+      </div>
+      <div style={{flex:1}}>
+        <label style={styles.label}>End</label>
+        <input style={styles.input} type="datetime-local"
+          min={form.start_datetime || (tripStart ? tripStart.slice(0,10) + "T00:00" : "")}
+          max={tripEnd ? tripEnd.slice(0,10) + "T23:59" : ""}
+          value={form.end_datetime}
+          onChange={e => setForm({...form, end_datetime: e.target.value})} />
+      </div>
+    </div>
+
+
 {/* <label style={styles.label}>Cost Per Person ($)</label>
         <input style={styles.input} type="number" min="0" step="0.01"
           placeholder="0.00" value={form.cost_per_person}

@@ -15,14 +15,20 @@ const TRAVEL_IMAGES = [
   "https://images.unsplash.com/photo-1500835556837-99ac94a94552?w=600&q=80",
 ];
 
+function parseLocalDate(d) {
+  if (!d) return null;
+  const [year, month, day] = d.slice(0, 10).split("-");
+  return new Date(year, month - 1, day);
+}
+
 function getDayCount(start, end) {
   if (!start || !end) return null;
-  const diff = new Date(end) - new Date(start);
+  const diff = parseLocalDate(end) - parseLocalDate(start);
   return Math.round(diff / (1000 * 60 * 60 * 24));
 }
 
 function formatDateRange(start, end) {
-  const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
+  const fmt = d => d ? parseLocalDate(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
   return `${fmt(start)} - ${fmt(end)}`;
 }
 

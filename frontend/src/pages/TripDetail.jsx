@@ -162,8 +162,14 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
   const approved = proposals.filter(p => p.STATUS === "approved");
   const isAdmin = trip.ROLE === "admin";
 
-  const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
+  // const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
 
+  const fmt = d => {
+    if (!d) return "";
+    const date = d.slice(0, 10);
+    const [year, month, day] = date.split("-");
+    return new Date(year, month - 1, day).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+  };
  const copyCode = () => {
   const code = trip.JOIN_CODE;
   console.log("Full trip object:", trip);

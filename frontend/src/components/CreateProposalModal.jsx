@@ -3,10 +3,19 @@ import { createProposal, addCostEstimate } from "../api/api";
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
 const CATEGORIES = ["Activity", "Lodging", "Transportation", "Food", "Other"];
 
-export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, members, onClose, onCreated }) {
+export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, members, initialData, onClose, onCreated }) {
+  // const [form, setForm] = useState({
+  //   title: "", category: "Activity", description: "",
+  //   location: "", start_datetime: "", end_datetime: "",
+  //   total_cost: ""
+  // });
   const [form, setForm] = useState({
-    title: "", category: "Activity", description: "",
-    location: "", start_datetime: "", end_datetime: "",
+    title: initialData?.title || "",
+    category: initialData?.category || "Activity",
+    description: initialData?.description || "",
+    location: initialData?.location || "",
+    start_datetime: "",
+    end_datetime: "",
     total_cost: ""
   });
   const [error, setError] = useState("");
@@ -17,13 +26,16 @@ export default function CreateProposalModal({ user, tripId, tripStart, tripEnd, 
     if (form.start_datetime && form.end_datetime) {
       if (new Date(form.end_datetime) <= new Date(form.start_datetime))
         return "End date must be after start date";
-      if (tripStart && new Date(form.start_datetime) < new Date(tripStart))
+      if (tripStart && form.start_datetime.slice(0,10) < tripStart.slice(0,10))
         return "Start date must be within the trip dates";
-      if (tripEnd && new Date(form.end_datetime) > new Date(tripEnd))
+      if (tripEnd && form.end_datetime.slice(0,10) > tripEnd.slice(0,10))
         return "End date must be within the trip dates";
     }
-    if (form.start_datetime && new Date(form.start_datetime) < new Date())
-      return "Start date should be a future date";
+    if (form.start_datetime) {
+      const today = new Date().toISOString().slice(0,10);
+      if (form.start_datetime.slice(0,10) < today)
+        return "Start date must be today or in the future";
+    }
     return null;
   };
 
@@ -79,28 +91,24 @@ onCreated();
           <div style={{flex:1}}>
             <label style={styles.label}>Start</label>
             <input style={styles.input} type="datetime-local"
-              min={tripStart ? new Date(tripStart).toISOString().slice(0,16) : ""}
-              max={tripEnd   ? new Date(tripEnd).toISOString().slice(0,16)   : ""}
+              min={tripStart ? tripStart.slice(0,10) + "T00:00" : ""}
+              max={tripEnd   ? tripEnd.slice(0,10)   + "T23:59" : ""}
               value={form.start_datetime}
               onChange={e => setForm({...form, start_datetime: e.target.value})} />
           </div>
           <div style={{flex:1}}>
             <label style={styles.label}>End</label>
             <input style={styles.input} type="datetime-local"
-              min={form.start_datetime || ""}
-              max={tripEnd ? new Date(tripEnd).toISOString().slice(0,16) : ""}
+              min={form.start_datetime || (tripStart ? tripStart.slice(0,10) + "T00:00" : "")}
+              max={tripEnd ? tripEnd.slice(0,10) + "T23:59" : ""}
               value={form.end_datetime}
               onChange={e => setForm({...form, end_datetime: e.target.value})} />
           </div>
         </div>
 
         {tripStart && tripEnd && (
-          <p style={styles.hint}>📅 Trip dates: {new Date(tripStart).toLocaleDateString()} — {new Date(tripEnd).toLocaleDateString()}</p>
+          <p style={styles.hint}>📅 Trip dates: {tripStart.slice(0,10)} — {tripEnd.slice(0,10)}</p>
         )}
-{/* <label style={styles.label}>Cost Per Person ($)</label>
-        <input style={styles.input} type="number" min="0" step="0.01"
-          placeholder="0.00" value={form.cost_per_person}
-          onChange={e => setForm({...form, cost_per_person: e.target.value})} /> */}
 
         <label style={styles.label}>Total Cost ($)</label>
         <input style={styles.input} type="number" min="0" step="0.01"

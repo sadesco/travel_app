@@ -10,6 +10,7 @@ export default function CreateTripModal({ user, onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.trip_name || !form.start_date || !form.end_date) { setError("Trip name and dates are required"); return; }
+    if (form.end_date <= form.start_date) { setError("End date must be after start date"); return; }
     setLoading(true);
     const res = await createTrip({ ...form, user_id: user.user_id });
     setLoading(false);
@@ -29,7 +30,7 @@ export default function CreateTripModal({ user, onClose, onCreated }) {
           ["Trip Name", "trip_name", "text", "e.g., Summer in Bali"],
           ["Destination", "destination", "text", "e.g., Bali, Indonesia"],
           ["Budget per Person ($)", "budget", "number", "3000"],
-          ["Image URL (optional)", "image_url", "text", "Leave empty for random image"],
+          // ["Image URL (optional)", "image_url", "text", "Leave empty for random image"],
         ].map(([label, key, type, ph]) => (
           <div key={key}>
             <label style={styles.label}>{label}</label>
