@@ -5,6 +5,6 @@ class PollOption(db.Model):
 
 	optionid = db.Column("OPTIONID", db.Integer, primary_key=True)
 	pollid = db.Column("POLLID", db.Integer, db.ForeignKey('POLLS.POLLID'), nullable=False)
-	proposalid = db.Column("PROPOSALID", db.Integer, db.ForeignKey('PROPOSALS.proposalid'), nullable=False)
+	proposalid = db.Column("PROPOSALID", db.Integer, db.ForeignKey('PROPOSALS.PROPOSALID'), nullable=False)
 
-	votes = db.relationship("Votes", backref="option")
+	votes = db.relationship("Votes", backref="option", lazy=True)

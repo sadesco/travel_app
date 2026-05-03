@@ -3,9 +3,9 @@ from db import db
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models.user import User
 from models.proposals import Proposal
 from models.itinerary_items import ItineraryItem
-from models.user import User
 from datetime import datetime
 
 proposals_bp = Blueprint("proposals", __name__)

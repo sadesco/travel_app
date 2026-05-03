@@ -64,7 +64,7 @@ def create_app():
     app.register_blueprint(budget_bp, url_prefix="/api/budget")
 
     try:
-        app.register_blueprint(polls_bp, url_prefix="/api/polls")
+        app.register_blueprint(polls_bp, url_prefix="/polls")
     except:
         pass
 

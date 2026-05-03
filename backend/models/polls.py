@@ -5,8 +5,8 @@ class Poll(db.Model):
 	__tablename__ = "POLLS"
 	
 	pollid = db.Column("POLLID", db.Integer, primary_key=True)
-	tripid = db.Column("TRIPID", db.Integer, db.ForeignKey("TRIPS.tripid"), nullable=False)
-	created_by = db.Column("CREATED_BY", db.Integer, db.ForeignKey("USERS.userid"), nullable=False)
+	tripid = db.Column("TRIPID", db.Integer, db.ForeignKey("TRIPS.TRIPID"), nullable=False)
+	created_by = db.Column("CREATED_BY", db.Integer, db.ForeignKey("USERS.USERID"), nullable=False)
 	title = db.Column("TITLE", db.String(200))
 
 	deadline = db.Column("DEADLINE", db.DateTime)

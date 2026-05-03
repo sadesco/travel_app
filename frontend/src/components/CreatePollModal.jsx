@@ -4,11 +4,30 @@ import { createPoll } from "../api/api";
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
 const CATEGORY_ICON = { Activity:"⚡", Lodging:"🏨", Transportation:"✈️", Food:"🍽️", Other:"📌" };
 
-export default function CreatePollModal({ user, tripId, proposals, onClose, onCreated }) {
+export default function CreatePollModal({ user, tripId, proposals = [], onClose, onCreated }) {
   const [form, setForm] = useState({ title: "", deadline: "" });
   const [selectedProposalIds, setSelectedProposalIds] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  //const [newPollTitle, setNewPollTitle] = useState("");
+  //const [newPollDeadline, setNewPollDeadline] = useState("");
+  //const [newPollProposalIds, setNewPollProposalIds] = useState([]);
+
+  // const handleCreatePoll = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!newPollTitle.trim() || !newPollDeadline || newPollProposalIds.length < 2) {
+  //     return;
+  //   }
+
+  //   await createPoll(tripId, {
+  //     title: newPollTitle.trim(),
+  //     deadline: newPollDeadline,
+  //     proposalIds: newPollProposalIds,
+  //   });
+
+  //   onCreated();
+  // };
 
   const toggleProposal = (id) => {
     setSelectedProposalIds(prev =>
@@ -41,7 +60,7 @@ export default function CreatePollModal({ user, tripId, proposals, onClose, onCr
     onClose();
   };
 
-  const availableProposals = proposals.filter(p => p.STATUS !== "rejected");
+  const availableProposals = (proposals || []).filter(p => p.STATUS !== "rejected");
 
   return (
     <div style={styles.overlay}>

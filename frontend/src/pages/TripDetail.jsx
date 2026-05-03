@@ -31,6 +31,25 @@ const Avatar = ({ name }) => {
   );
 };
 
+// ---- Poll helper functions ----
+
+// A poll is closed if is_open is false OR the deadline has passed
+const isPollClosed = (poll) => {
+  if (!poll.IS_OPEN) return true;
+  if (poll.DEADLINE && new Date(poll.DEADLINE) < new Date()) return true;
+  return false;
+};
+
+// The user has voted if any option in the poll has USER_VOTED === 1
+const userVotedOnPoll = (poll) => {
+  return poll.OPTIONS?.some(opt => opt.USER_VOTED === 1) ?? false;
+};
+
+// Sum up all vote counts across options
+const totalPollVotes = (poll) => {
+  return poll.OPTIONS?.reduce((sum, opt) => sum + (opt.VOTE_COUNT || 0), 0) ?? 0;
+};
+
 
 export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogout }) {
   const [proposals, setProposals] = useState([]);
@@ -47,9 +66,9 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
   const [editingProposal, setEditingProposal] = useState(null);
   const [polls, setPolls] = useState([]);
   const [showPollModal, setShowPollModal] = useState(false);
-  const [newPollTitle, setNewPollTitle] = useState("");
-  const [newPollDeadline, setNewPollDeadline] = useState("");
-  const [newPollProposalIds, setNewPollProposalIds] = useState([]);
+  //const [newPollTitle, setNewPollTitle] = useState("");
+  //const [newPollDeadline, setNewPollDeadline] = useState("");
+  //const [newPollProposalIds, setNewPollProposalIds] = useState([]);
   const [selectedVotes, setSelectedVotes] = useState({});  // { [poll_id]: option_id }
   const [budgetSummary, setBudgetSummary] = useState({ total_per_person: 0, total_cost: 0, breakdown: {} });
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
@@ -73,7 +92,18 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
 
   const loadPolls = async () => {
     const data = await getPolls(trip.TRIPID, user.user_id);
-    setPolls(Array.isArray(data) ? data : []);
+    const values = Array.isArray(data) ? data : [];
+    setPolls(values);
+
+    //for each poll, find option user voted for and remember it
+    const currSelections = {};
+    values.forEach((poll) => {
+      const voted_option = poll.OPTIONS?.find((opt) => opt.USER_VOTED == 1);
+      if (voted_option) {
+        currSelections[poll.POLLID] = voted_option.OPTIONID;
+      }
+    });
+    setSelectedVotes(currSelections);
   };
 
   const handleCastVote = async (pollId) => {
@@ -81,10 +111,32 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
     if (!optionId)
       return;
 
-  const res = await castVote(pollId, optionId, user.user_id);
+    const res = await castVote(pollId, optionId, user.user_id);
     if (res.error) { console.error(res.error); return; }
     setSelectedVotes(prev => { const s = { ...prev }; delete s[pollId]; return s; });
     loadPolls();
+  };
+  
+  const handleCreatePoll = async () => {
+    if (!newPollTitle.trim() || !newPollDeadline || newPollProposalIds.length < 2) return;
+    await createPoll(trip.TRIPID, {
+      title: newPollTitle.trim(),
+      deadline: newPollDeadline,
+      proposalIds: newPollProposalIds,
+    });
+    setShowPollModal(false);
+    setNewPollTitle("");
+    setNewPollDeadline("");
+    setNewPollProposalIds([]);
+    loadPolls();
+  };
+
+  const toggleProposalInPoll = (proposalId) => {
+    setNewPollProposalIds(prev =>
+      prev.includes(proposalId)
+        ? prev.filter(id => id !== proposalId)
+        : [...prev, proposalId]
+    );
   };
 
   const loadBudget = async () => {
@@ -366,7 +418,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
               {polls.map(poll => {
                 const closed = isPollClosed(poll);
                 const hasVoted = userVotedOnPoll(poll);
-                const showResults = hasVoted || closed;
+                const showResults = closed;
                 const total = totalPollVotes(poll);
                 const selected = selectedVotes[poll.POLLID];
                 const daysLeft = Math.ceil((new Date(poll.DEADLINE) - new Date()) / 86400000);
@@ -383,7 +435,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
                         <div style={{ display:"flex", gap:"12px", fontSize:"12px", color:"#b0a090", flexWrap:"wrap" }}>
                           <span>📅 Created {fmt(poll.CREATED_AT)}</span>
                           <span>⏱ {closed ? "Closed" : "Closes"} {fmt(poll.DEADLINE)}</span>
-                          <span>👤 by {poll.CREATED_BY_USERNAME}</span>
+                          <span>👤 by {poll.CREATED_BY}</span>
                         </div>
                       </div>
                       <div style={{ display:"flex", gap:"8px", alignItems:"center", flexShrink:0, marginLeft:"10px" }}>
@@ -473,7 +525,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
                         disabled={!selected}
                         onClick={() => handleCastVote(poll.POLLID)}
                       >
-                        Cast Vote
+                        {hasVoted ? "Updated Vote" : "Cast Vote"}
                       </button>
                     )}
                     {hasVoted && !closed && (
@@ -489,97 +541,6 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
                 );
               })}
             </div>
-
-            {/* ── Create Poll Modal ── */}
-            {showPollModal && (
-              <div
-                style={{ position:"fixed", inset:0, background:"rgba(60,40,20,0.35)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}
-                onClick={() => setShowPollModal(false)}
-              >
-                <div
-                  style={{ background:"#f7f4ef", borderRadius:"20px", padding:"32px", width:"520px", maxWidth:"95vw", maxHeight:"85vh", overflowY:"auto" }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:"26px", color:C.darkBrown, margin:"0 0 20px" }}>
-                    Create a Poll
-                  </h2>
-
-                  {/* Title */}
-                  <label style={styles.detailKey}>Poll Question / Title</label>
-                  <input
-                    style={{ ...styles.formInput, marginBottom:"16px" }}
-                    placeholder="e.g. Which hotel should we book?"
-                    value={newPollTitle}
-                    onChange={e => setNewPollTitle(e.target.value)}
-                  />
-
-                  {/* Deadline */}
-                  <label style={styles.detailKey}>Voting Deadline</label>
-                  <input
-                    type="datetime-local"
-                    style={{ ...styles.formInput, marginBottom:"16px" }}
-                    value={newPollDeadline}
-                    onChange={e => setNewPollDeadline(e.target.value)}
-                  />
-
-                  {/* Proposal picker */}
-                  <label style={styles.detailKey}>Select Proposals as Options (min. 2)</label>
-                  {proposals.filter(p => p.STATUS !== "rejected").length === 0 ? (
-                    <p style={styles.muted}>No proposals available. Create proposals first.</p>
-                  ) : (
-                    <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"16px" }}>
-                      {proposals.filter(p => p.STATUS !== "rejected").map(p => {
-                        const checked = newPollProposalIds.includes(p.PROPOSALID);
-                        return (
-                          <div
-                            key={p.PROPOSALID}
-                            onClick={() => toggleProposalInPoll(p.PROPOSALID)}
-                            style={{
-                              display:"flex", alignItems:"center", gap:"12px",
-                              padding:"12px 14px", borderRadius:"10px", cursor:"pointer",
-                              border:`1.5px solid ${checked ? C.brown : C.tan}`,
-                              background: checked ? "#faf6f0" : "#fff",
-                              transition:"border-color 0.15s, background 0.15s"
-                            }}
-                          >
-                            <div style={{
-                              width:"18px", height:"18px", borderRadius:"4px", flexShrink:0,
-                              border:`2px solid ${checked ? C.brown : C.tan}`,
-                              background: checked ? C.brown : "#fff",
-                              display:"flex", alignItems:"center", justifyContent:"center"
-                            }}>
-                              {checked && <span style={{ color:"#fff", fontSize:"12px", lineHeight:1 }}>✓</span>}
-                            </div>
-                            <div style={{ flex:1 }}>
-                              <div style={{ fontSize:"14px", fontWeight:600, color:C.darkBrown }}>{p.TITLE}</div>
-                              <div style={{ fontSize:"12px", color:"#b0a090" }}>
-                                {CATEGORY_ICON[p.CATEGORY] || "📌"} {p.CATEGORY}
-                                {p.LOCATION ? ` · 📍 ${p.LOCATION}` : ""}
-                                {` · ${p.STATUS}`}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <div style={{ display:"flex", gap:"10px", justifyContent:"flex-end", marginTop:"8px" }}>
-                    <button
-                      style={{ padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:"#f0ebe3", color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" }}
-                      onClick={() => setShowPollModal(false)}
-                    >Cancel</button>
-                    <button
-                      style={{ ...styles.addBtn, opacity: (newPollTitle.trim() && newPollDeadline && newPollProposalIds.length >= 2) ? 1 : 0.5 }}
-                      disabled={!newPollTitle.trim() || !newPollDeadline || newPollProposalIds.length < 2}
-                      onClick={handleCreatePoll}
-                    >
-                      Create Poll
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
