@@ -17,8 +17,6 @@ CREATE OR REPLACE TRIGGER itinerary_items_bir
 BEFORE INSERT ON ITINERARY_ITEMS
 FOR EACH ROW
 BEGIN
-  IF :NEW.ItineraryID IS NULL THEN
     SELECT itinerary_items_seq.NEXTVAL INTO :NEW.ItineraryID FROM dual;
-  END IF;
 END;
 /
