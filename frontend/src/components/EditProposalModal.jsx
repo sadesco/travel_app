@@ -18,7 +18,7 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
     location: proposal.LOCATION || "",
     start_datetime: toLocal(proposal.START_DATETIME),
     end_datetime: toLocal(proposal.END_DATETIME),
-    cost_per_person: proposal.COST_PER_PERSON || "",
+    // cost_per_person: proposal.COST_PER_PERSON || "",
     total_cost: proposal.TOTAL_COST || "",
  });
   const [error, setError] = useState("");
@@ -44,7 +44,7 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
     const res = await editProposal(proposal.PROPOSALID, form);
     if (res.error) { setError(res.error); setLoading(false); return; }
 
-  if (form.cost_per_person || form.total_cost) {
+  if (form.total_cost) {
     await addCostEstimate({
       proposal_id: proposal.PROPOSALID,
       user_id: proposal.PROPOSED_BY_ID,
@@ -103,10 +103,10 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
               onChange={e => setForm({...form, end_datetime: e.target.value})} />
           </div>
         </div>
-<label style={styles.label}>Cost Per Person ($)</label>
+{/* <label style={styles.label}>Cost Per Person ($)</label>
         <input style={styles.input} type="number" min="0" step="0.01"
           placeholder="0.00" value={form.cost_per_person}
-          onChange={e => setForm({...form, cost_per_person: e.target.value})} />
+          onChange={e => setForm({...form, cost_per_person: e.target.value})} /> */}
 
         <label style={styles.label}>Total Cost ($)</label>
         <input style={styles.input} type="number" min="0" step="0.01"

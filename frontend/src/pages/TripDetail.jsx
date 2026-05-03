@@ -330,7 +330,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
               {[
                 { icon:"⚡", label:"Proposals", value: proposals.length, sub:`${approved.length} approved` },
                 { icon:"📍", label:"Itinerary", value: itinerary.length, sub:`${itinerary.length} activities` },
-                { icon:"$", label:"Budget", value:`$${trip.BUDGET || "0"}`, sub:`per person / $${trip.BUDGET || "3000"}` },
+                { icon:"$", label:"Budget", value:`$${budgetSummary.total_per_person.toFixed(2)}`, sub:`of $${trip.BUDGET || "0"} budget` },
               ].map(s => (
                 <div key={s.label} style={styles.statCard}>
                   <div style={styles.statHeader}>
@@ -720,6 +720,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
           tripId={trip.TRIPID}
           tripStart={trip.START_DATE}
           tripEnd={trip.END_DATE}
+          members={members.length}
           initialData={prefilledProposal}
           onClose={handleCloseModal}
           onCreated={() => { loadAll(); handleCloseModal(); }}
