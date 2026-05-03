@@ -48,7 +48,7 @@ function Login({ onLogin }) {
 
       <div style={styles.card}>
         <div style={styles.logoCircle}>✈️</div>
-        <div style={styles.brandScript}>Travel</div>
+        <div style={styles.brandScript}>Wanderlust</div>
         <div style={styles.brandSub}>PLAN TOGETHER</div>
         <p style={styles.tagline}>Create unforgettable journeys with friends</p>
 

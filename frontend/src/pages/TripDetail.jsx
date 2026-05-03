@@ -145,7 +145,16 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
   };
 
   const loadAll = async () => {
-    await Promise.all([load(), loadItinerary(), loadMembers(), loadPolls(), loadBudget()]);
+    // await Promise.all([load(), loadItinerary(), loadMembers(), loadPolls(), loadBudget()]);
+      await Promise.all([
+        load().catch(e => console.log("proposals failed:", e)),
+        loadItinerary().catch(e => console.log("itinerary failed:", e)),
+        loadMembers().catch(e => console.log("members failed:", e)),
+        loadPolls().catch(e => console.log("polls failed:", e)),
+        loadBudget().catch(e => console.log("budget failed:", e)),
+      ]);
+
+    
   };
 
   useEffect(() => { loadAll(); }, [trip.TRIPID]);
@@ -155,11 +164,24 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
 
   const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "";
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(trip.JOIN_CODE);
-    setCodeCopied(true);
-    setTimeout(() => setCodeCopied(false), 2000);
-  };
+ const copyCode = () => {
+  const code = trip.JOIN_CODE;
+  console.log("Full trip object:", trip);
+  console.log("JOIN_CODE value:", trip.JOIN_CODE);
+  if (!code) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code);
+  } else {
+    const el = document.createElement("textarea");
+    el.value = code;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+  }
+  setCodeCopied(true);
+  setTimeout(() => setCodeCopied(false), 2000);
+};
 
   const SectionTitle = ({ children }) => (
     <div style={styles.sectionTitleWrap}>
@@ -696,6 +718,8 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
         <CreateProposalModal
           user={user}
           tripId={trip.TRIPID}
+          tripStart={trip.START_DATE}
+          tripEnd={trip.END_DATE}
           initialData={prefilledProposal}
           onClose={handleCloseModal}
           onCreated={() => { loadAll(); handleCloseModal(); }}

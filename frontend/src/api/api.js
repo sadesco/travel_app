@@ -161,13 +161,26 @@ export const closePoll = async (poll_id) => {
   return res.json();
 }
 
+// export const getBudgetSummary = async (tripId) => {
+//   const res = await fetch(`${BASE_URL}/api/budget/?trip_id=${tripId}`);
+//   return res.json();
+// };
+
+// export const addCostEstimate = async (data) => {
+//   const res = await fetch(`${BASE_URL}/budget/estimate`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify(data),
+//   });
+//   return res.json();
+// };
 export const getBudgetSummary = async (tripId) => {
-  const res = await fetch(`${BASE_URL}/budget/?trip_id=${tripId}`);
+  const res = await fetch(`${BASE_URL}/api/budget/?trip_id=${tripId}`);  // keep as-is
   return res.json();
 };
 
 export const addCostEstimate = async (data) => {
-  const res = await fetch(`${BASE_URL}/budget/estimate`, {
+  const res = await fetch(`${BASE_URL}/api/budget/estimate`, {  // add /api
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

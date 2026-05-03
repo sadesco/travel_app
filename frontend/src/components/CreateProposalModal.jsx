@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { createProposal, addCostEstimate } from "../api/api";
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
@@ -129,7 +128,3 @@ const styles = {
   error: { color:"#a85a5a", fontSize:"13px", margin:0, background:"#fdf0ee", padding:"8px 12px", borderRadius:"8px" },
   submitBtn: { marginTop:"4px", padding:"14px", borderRadius:"50px", border:"none", background:C.brown, color:"#fff", fontSize:"15px", fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
 };
-
-
-
-
