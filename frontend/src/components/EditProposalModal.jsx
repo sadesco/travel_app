@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { editProposal } from "../api/api";
+import { editProposal, addCostEstimate } from "../api/api";
+
 
 const C = { brown: "#7c6645", darkBrown: "#5c4a2a", lightCream: "#f7f4ef" };
 const CATEGORIES = ["Activity", "Lodging", "Transportation", "Food", "Other"];
@@ -18,7 +19,9 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
     location: proposal.LOCATION || "",
     start_datetime: toLocal(proposal.START_DATETIME),
     end_datetime: toLocal(proposal.END_DATETIME),
-  });
+    cost_per_person: proposal.COST_PER_PERSON || "",
+    total_cost: proposal.TOTAL_COST || "",
+ });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -40,8 +43,17 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
     if (err) { setError(err); return; }
     setLoading(true);
     const res = await editProposal(proposal.PROPOSALID, form);
-    setLoading(false);
-    if (res.error) { setError(res.error); return; }
+    if (res.error) { setError(res.error); setLoading(false); return; }
+
+  if (form.cost_per_person || form.total_cost) {
+    await addCostEstimate({
+      proposal_id: proposal.PROPOSALID,
+      user_id: proposal.PROPOSED_BY_ID,
+      per_person: form.cost_per_person || null,
+      total_cost: form.total_cost || null,
+    });
+  }
+  setLoading(false);
     onSaved();
     onClose();
   };
@@ -92,7 +104,15 @@ export default function EditProposalModal({ proposal, tripStart, tripEnd, onClos
               onChange={e => setForm({...form, end_datetime: e.target.value})} />
           </div>
         </div>
+<label style={styles.label}>Cost Per Person ($)</label>
+        <input style={styles.input} type="number" min="0" step="0.01"
+          placeholder="0.00" value={form.cost_per_person}
+          onChange={e => setForm({...form, cost_per_person: e.target.value})} />
 
+        <label style={styles.label}>Total Cost ($)</label>
+        <input style={styles.input} type="number" min="0" step="0.01"
+          placeholder="0.00" value={form.total_cost}
+          onChange={e => setForm({...form, total_cost: e.target.value})} />
         <button style={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
           {loading ? "Saving..." : "Save Changes"}
         </button>

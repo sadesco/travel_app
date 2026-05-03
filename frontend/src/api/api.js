@@ -131,8 +131,8 @@ export const updateUser = async (user_id, data) => {
 };
 
 // -- Poll + votes --
-export const getPolls = async (trip_id) => {
-  const res = await fetch(`${BASE_URL}/trips/${trip_id}/polls`, { credentials: "include" });
+export const getPolls = async (trip_id, user_id) => {
+  const res = await fetch(`${BASE_URL}/polls/?trip_id=${tripId}&user_id=${user_id}/polls`, { credentials: "include" });
   return res.json();
 };
 
@@ -146,12 +146,12 @@ export const createPoll = async (trip_id, payload) => {
   return res.json();
 };
 
-export const castVote = async (poll_id, option_id) => {
+export const castVote = async (poll_id, option_id, user_id) => {
   const res = await fetch(`${BASE_URL}/polls/${poll_id}/vote`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ option_id }),
+    body: JSON.stringify({ option_id: option_id, user_id: user_id }),
   });
   return res.json();
 };
@@ -163,3 +163,17 @@ export const closePoll = async (poll_id) => {
   });
   return res.json();
 }
+
+export const getBudgetSummary = async (tripId) => {
+  const res = await fetch(`${BASE_URL}/budget/?trip_id=${tripId}`);
+  return res.json();
+};
+
+export const addCostEstimate = async (data) => {
+  const res = await fetch(`${BASE_URL}/budget/estimate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};

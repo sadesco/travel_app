@@ -1,7 +1,6 @@
 from db import db
 from datetime import datetime, timezone
-from user import User
-import poll_options
+from models.user import User
 
 class Votes(db.Model):
 	__tablename__ = "VOTES"
@@ -12,4 +11,4 @@ class Votes(db.Model):
 	voted_at = db.Column("VOTED_AT", db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 	# unique constraint to enforce one user gets to select one option
-	__table_args__ = (db.UniqueConstraint('userid', 'optionid', name='unq_user_option'),)
+	__table_args__ = (db.UniqueConstraint("USERID", "OPTIONID", name="unq_user_option"),)

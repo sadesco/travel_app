@@ -10,7 +10,8 @@ from routes.discover import discover_bp
 from routes.trips import trips_bp
 from routes.proposals import proposals_bp
 from routes.itinerary_items import itinerary_items_bp
-
+from routes.budget import budget_bp
+from routes.polls import polls_bp
 
 def create_app():
     app = Flask(__name__)
@@ -57,6 +58,13 @@ def create_app():
 
     try:
         app.register_blueprint(itinerary_items_bp, url_prefix="/itinerary_items")
+    except:
+        pass
+
+    app.register_blueprint(budget_bp, url_prefix="/api/budget")
+
+    try:
+        app.register_blueprint(polls_bp, url_prefix="/api/polls")
     except:
         pass
 

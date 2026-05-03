@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getItineraryItems, getProposals, getTripMembers, updateProposalStatus,
   addItineraryItem, deleteItineraryItem, getPolls, createPoll, castVote,
-  closePoll, deleteProposal } from "../api/api";
+  closePoll, deleteProposal, getBudgetSummary } from "../api/api";
 import CreateProposalModal from "../components/CreateProposalModal";
 import CreateItineraryModal from "../components/CreateItineraryModal";
 import InviteModal from "../components/InviteModal";
@@ -51,7 +51,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
   const [newPollDeadline, setNewPollDeadline] = useState("");
   const [newPollProposalIds, setNewPollProposalIds] = useState([]);
   const [selectedVotes, setSelectedVotes] = useState({});  // { [poll_id]: option_id }
-
+  const [budgetSummary, setBudgetSummary] = useState({ total_per_person: 0, total_cost: 0, breakdown: {} });
   const heroImg = trip.IMAGE_URL || TRAVEL_IMAGES[(trip.TRIPID || 0) % TRAVEL_IMAGES.length];
 
   const load = async () => {
@@ -72,12 +72,28 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
   };
 
   const loadPolls = async () => {
-    const data = await getPolls(trip.TRIPID);
+    const data = await getPolls(trip.TRIPID, user.user_id);
     setPolls(Array.isArray(data) ? data : []);
   };
 
+  const handleCastVote = async (pollId) => {
+    const optionId = selectedVotes[pollId];
+    if (!optionId)
+      return;
+
+  const res = await castVote(pollId, optionId, user.user_id);
+    if (res.error) { console.error(res.error); return; }
+    setSelectedVotes(prev => { const s = { ...prev }; delete s[pollId]; return s; });
+    loadPolls();
+  };
+
+  const loadBudget = async () => {
+    const data = await getBudgetSummary(trip.TRIPID);
+    if (!data.error) setBudgetSummary(data);
+  };
+
   const loadAll = async () => {
-    await Promise.all([load(), loadItinerary(), loadMembers(), loadPolls()]);
+    await Promise.all([load(), loadItinerary(), loadMembers(), loadPolls(), loadBudget()]);
   };
 
   useEffect(() => { loadAll(); }, [trip.TRIPID]);
@@ -325,7 +341,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
                       }}>🗑 Delete</button>
                     )}
                   </div>               
- </div>
+  </div>
               ))}
             </div>
           </div>
@@ -346,6 +362,224 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
               </div>
             )}
             
+            <div style={styles.proposalList}>
+              {polls.map(poll => {
+                const closed = isPollClosed(poll);
+                const hasVoted = userVotedOnPoll(poll);
+                const showResults = hasVoted || closed;
+                const total = totalPollVotes(poll);
+                const selected = selectedVotes[poll.POLLID];
+                const daysLeft = Math.ceil((new Date(poll.DEADLINE) - new Date()) / 86400000);
+
+                return (
+                  <div key={poll.POLLID} style={styles.proposalCard}>
+
+                    {/* Header */}
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"6px" }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight:700, fontSize:"15px", color:C.darkBrown, margin:"0 0 4px" }}>
+                          {poll.TITLE}
+                        </p>
+                        <div style={{ display:"flex", gap:"12px", fontSize:"12px", color:"#b0a090", flexWrap:"wrap" }}>
+                          <span>📅 Created {fmt(poll.CREATED_AT)}</span>
+                          <span>⏱ {closed ? "Closed" : "Closes"} {fmt(poll.DEADLINE)}</span>
+                          <span>👤 by {poll.CREATED_BY_USERNAME}</span>
+                        </div>
+                      </div>
+                      <div style={{ display:"flex", gap:"8px", alignItems:"center", flexShrink:0, marginLeft:"10px" }}>
+                        {isAdmin && !closed && (
+                          <button style={styles.rejectBtn} onClick={async () => { await closePoll(poll.POLLID); loadPolls(); }}>
+                            Close Poll
+                          </button>
+                        )}
+                        <span style={{
+                          fontSize:"11px", fontWeight:600, padding:"3px 10px", borderRadius:"20px",
+                          background: closed ? "#f4e8e8" : "#e8f4e8",
+                          color: closed ? "#6a3a3a" : "#3a6a3a"
+                        }}>
+                          {closed ? "Closed" : "Open"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Closing-soon warning */}
+                    {!closed && daysLeft <= 3 && daysLeft >= 0 && (
+                      <div style={{ fontSize:"12px", color:"#a85a00", background:"#fff4e5", borderRadius:"8px", padding:"6px 10px", margin:"10px 0" }}>
+                        ⚠️ Closing in {daysLeft} day{daysLeft !== 1 ? "s" : ""} — vote soon!
+                      </div>
+                    )}
+
+                    {/* Options */}
+                    <div style={{ display:"flex", flexDirection:"column", gap:"10px", margin:"14px 0 12px" }}>
+                      {poll.OPTIONS?.map(opt => {
+                        const pct = total > 0 ? Math.round((opt.VOTE_COUNT / total) * 100) : 0;
+                        const isMyVote = opt.USER_VOTED === 1;
+                        const isSelected = selected === opt.OPTIONID;
+
+                        return (
+                          <div key={opt.OPTIONID}>
+                            {showResults ? (
+                              /* Results view */
+                              <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                                <div style={{
+                                  width:"18px", height:"18px", borderRadius:"50%", flexShrink:0,
+                                  border:`2px solid ${isMyVote ? C.brown : C.tan}`, background:"#fff",
+                                  display:"flex", alignItems:"center", justifyContent:"center"
+                                }}>
+                                  {isMyVote && <div style={{ width:"8px", height:"8px", borderRadius:"50%", background:C.brown }} />}
+                                </div>
+                                <div style={{ flex:1 }}>
+                                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"4px" }}>
+                                    <span style={{ fontSize:"14px", color:C.darkBrown, fontWeight: isMyVote ? 700 : 400 }}>
+                                      {CATEGORY_ICON[opt.PROPOSAL_CATEGORY] || "📌"} {opt.PROPOSAL_TITLE}
+                                    </span>
+                                    <span style={{ fontSize:"12px", color:"#b0a090", whiteSpace:"nowrap", marginLeft:"8px" }}>
+                                      {pct}% ({opt.VOTE_COUNT})
+                                    </span>
+                                  </div>
+                                  <div style={{ height:"6px", background:"#f0ebe3", borderRadius:"3px", overflow:"hidden" }}>
+                                    <div style={{ height:"100%", width:`${pct}%`, background:C.brown, borderRadius:"3px", transition:"width 0.5s ease" }} />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              /* Voting view */
+                              <div
+                                onClick={() => setSelectedVotes(prev => ({ ...prev, [poll.POLLID]: opt.OPTIONID }))}
+                                style={{ display:"flex", alignItems:"center", gap:"10px", cursor:"pointer" }}
+                              >
+                                <div style={{
+                                  width:"18px", height:"18px", borderRadius:"50%",
+                                  border:`2px solid ${isSelected ? C.brown : C.tan}`,
+                                  background:"#fff", flexShrink:0,
+                                  display:"flex", alignItems:"center", justifyContent:"center"
+                                }}>
+                                  {isSelected && <div style={{ width:"8px", height:"8px", borderRadius:"50%", background:C.brown }} />}
+                                </div>
+                                <span style={{ fontSize:"14px", color:C.darkBrown }}>
+                                  {CATEGORY_ICON[opt.PROPOSAL_CATEGORY] || "📌"} {opt.PROPOSAL_TITLE}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Footer action */}
+                    {!showResults && !closed && (
+                      <button
+                        style={{ ...styles.addBtn, opacity: !selected ? 0.5 : 1 }}
+                        disabled={!selected}
+                        onClick={() => handleCastVote(poll.POLLID)}
+                      >
+                        Cast Vote
+                      </button>
+                    )}
+                    {hasVoted && !closed && (
+                      <p style={styles.muted}>✓ You voted · results visible to all members after voting</p>
+                    )}
+                    {closed && (
+                      <p style={styles.muted}>Poll closed · final results shown to all members</p>
+                    )}
+                    <p style={{ ...styles.muted, marginTop:"8px" }}>
+                      {total} vote{total !== 1 ? "s" : ""} total
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Create Poll Modal ── */}
+            {showPollModal && (
+              <div
+                style={{ position:"fixed", inset:0, background:"rgba(60,40,20,0.35)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}
+                onClick={() => setShowPollModal(false)}
+              >
+                <div
+                  style={{ background:"#f7f4ef", borderRadius:"20px", padding:"32px", width:"520px", maxWidth:"95vw", maxHeight:"85vh", overflowY:"auto" }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:"26px", color:C.darkBrown, margin:"0 0 20px" }}>
+                    Create a Poll
+                  </h2>
+
+                  {/* Title */}
+                  <label style={styles.detailKey}>Poll Question / Title</label>
+                  <input
+                    style={{ ...styles.formInput, marginBottom:"16px" }}
+                    placeholder="e.g. Which hotel should we book?"
+                    value={newPollTitle}
+                    onChange={e => setNewPollTitle(e.target.value)}
+                  />
+
+                  {/* Deadline */}
+                  <label style={styles.detailKey}>Voting Deadline</label>
+                  <input
+                    type="datetime-local"
+                    style={{ ...styles.formInput, marginBottom:"16px" }}
+                    value={newPollDeadline}
+                    onChange={e => setNewPollDeadline(e.target.value)}
+                  />
+
+                  {/* Proposal picker */}
+                  <label style={styles.detailKey}>Select Proposals as Options (min. 2)</label>
+                  {proposals.filter(p => p.STATUS !== "rejected").length === 0 ? (
+                    <p style={styles.muted}>No proposals available. Create proposals first.</p>
+                  ) : (
+                    <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"16px" }}>
+                      {proposals.filter(p => p.STATUS !== "rejected").map(p => {
+                        const checked = newPollProposalIds.includes(p.PROPOSALID);
+                        return (
+                          <div
+                            key={p.PROPOSALID}
+                            onClick={() => toggleProposalInPoll(p.PROPOSALID)}
+                            style={{
+                              display:"flex", alignItems:"center", gap:"12px",
+                              padding:"12px 14px", borderRadius:"10px", cursor:"pointer",
+                              border:`1.5px solid ${checked ? C.brown : C.tan}`,
+                              background: checked ? "#faf6f0" : "#fff",
+                              transition:"border-color 0.15s, background 0.15s"
+                            }}
+                          >
+                            <div style={{
+                              width:"18px", height:"18px", borderRadius:"4px", flexShrink:0,
+                              border:`2px solid ${checked ? C.brown : C.tan}`,
+                              background: checked ? C.brown : "#fff",
+                              display:"flex", alignItems:"center", justifyContent:"center"
+                            }}>
+                              {checked && <span style={{ color:"#fff", fontSize:"12px", lineHeight:1 }}>✓</span>}
+                            </div>
+                            <div style={{ flex:1 }}>
+                              <div style={{ fontSize:"14px", fontWeight:600, color:C.darkBrown }}>{p.TITLE}</div>
+                              <div style={{ fontSize:"12px", color:"#b0a090" }}>
+                                {CATEGORY_ICON[p.CATEGORY] || "📌"} {p.CATEGORY}
+                                {p.LOCATION ? ` · 📍 ${p.LOCATION}` : ""}
+                                {` · ${p.STATUS}`}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div style={{ display:"flex", gap:"10px", justifyContent:"flex-end", marginTop:"8px" }}>
+                    <button
+                      style={{ padding:"10px 20px", borderRadius:"50px", border:`1px solid ${C.tan}`, background:"#f0ebe3", color:C.darkBrown, cursor:"pointer", fontWeight:600, fontSize:"13px" }}
+                      onClick={() => setShowPollModal(false)}
+                    >Cancel</button>
+                    <button
+                      style={{ ...styles.addBtn, opacity: (newPollTitle.trim() && newPollDeadline && newPollProposalIds.length >= 2) ? 1 : 0.5 }}
+                      disabled={!newPollTitle.trim() || !newPollDeadline || newPollProposalIds.length < 2}
+                      onClick={handleCreatePoll}
+                    >
+                      Create Poll
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -397,51 +631,62 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
           </div>
         )}
 
-        {activeTab === "Budget" && (
-          <div>
-            <SectionTitle>Budget</SectionTitle>
-            <div style={styles.budgetGrid}>
-              <div style={styles.budgetCard}>
-                <h3 style={styles.budgetCardTitle}>Trip Budget</h3>
-                <p style={styles.budgetCardSub}>Total planned budget per person</p>
-                <div style={styles.budgetAmount}>$ <span style={styles.budgetBig}>{trip.BUDGET || "3000"}</span> <span style={styles.budgetPer}>per person</span></div>
-                <div style={styles.budgetAmount}>$ <span style={styles.budgetMed}>{trip.BUDGET || "3000"}</span> <span style={styles.budgetPer}>total budget</span></div>
-              </div>
-              <div style={styles.budgetCard}>
-                <h3 style={styles.budgetCardTitle}>Current Spending</h3>
-                <p style={styles.budgetCardSub}>Based on approved itinerary items</p>
-                <div style={styles.budgetAmount}>$ <span style={styles.budgetBig}>0.00</span> <span style={styles.budgetPer}>per person</span></div>
-                <div style={styles.budgetAmount}>$ <span style={styles.budgetMed}>0.00</span> <span style={styles.budgetPer}>total cost</span></div>
-              </div>
-            </div>
-            <div style={styles.budgetStatusCard}>
-              <h3 style={styles.budgetCardTitle}>Budget Status</h3>
-              <p style={styles.budgetCardSub}>0.0% of budget used</p>
-              <div style={styles.progressBar}><div style={{...styles.progressFill, width:"0%"}} /></div>
-              <div style={{display:"flex", justifyContent:"space-between", marginTop:"8px"}}>
-                <span style={styles.muted}>Remaining</span>
-                <span style={styles.muted}>${trip.BUDGET || "3000"}.00 per person</span>
-              </div>
-            </div>
-            <div style={styles.budgetStatusCard}>
-              <h3 style={styles.budgetCardTitle}>Cost Breakdown</h3>
-              <p style={styles.budgetCardSub}>Per category</p>
-              {["Activity","Accommodation","Transportation","Food"].map(cat => (
-                <div key={cat}>
-                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", margin:"12px 0 4px"}}>
-                    <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
-                      <div style={styles.catIconCircle}>{CATEGORY_ICON[cat] || "📌"}</div>
-                      <span style={{fontSize:"14px", color:C.darkBrown}}>{cat}</span>
-                    </div>
-                    <span style={{fontSize:"14px", color:C.darkBrown}}>$0.00</span>
-                  </div>
-                  <div style={styles.progressBar}><div style={{...styles.progressFill, width:"0%"}} /></div>
+{activeTab === "Budget" && (() => {
+          const budget = parseFloat(trip.BUDGET || 0);
+          const spent = budgetSummary.total_per_person;
+          const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+          return (
+            <div>
+              <SectionTitle>Budget</SectionTitle>
+              <div style={styles.budgetGrid}>
+                <div style={styles.budgetCard}>
+                  <h3 style={styles.budgetCardTitle}>Trip Budget</h3>
+                  <p style={styles.budgetCardSub}>Total planned budget per person</p>
+                  <div style={styles.budgetAmount}>$<span style={styles.budgetBig}>{trip.BUDGET || "0"}</span> <span style={styles.budgetPer}>per person</span></div>
                 </div>
-              ))}
+                <div style={styles.budgetCard}>
+                  <h3 style={styles.budgetCardTitle}>Current Spending</h3>
+                  <p style={styles.budgetCardSub}>Based on approved proposals</p>
+                  <div style={styles.budgetAmount}>$<span style={styles.budgetBig}>{spent.toFixed(2)}</span> <span style={styles.budgetPer}>per person</span></div>
+                  <div style={styles.budgetAmount}>$<span style={styles.budgetMed}>{budgetSummary.total_cost.toFixed(2)}</span> <span style={styles.budgetPer}>total</span></div>
+                </div>
+              </div>
+              <div style={styles.budgetStatusCard}>
+                <h3 style={styles.budgetCardTitle}>Budget Status</h3>
+                <p style={styles.budgetCardSub}>{pct.toFixed(1)}% of budget used</p>
+                <div style={styles.progressBar}>
+                  <div style={{...styles.progressFill, width:`${pct}%`, background: pct > 90 ? "#a85a5a" : C.tan}} />
+                </div>
+                <div style={{display:"flex", justifyContent:"space-between", marginTop:"8px"}}>
+                  <span style={styles.muted}>Remaining</span>
+                  <span style={styles.muted}>${Math.max(budget - spent, 0).toFixed(2)} per person</span>
+                </div>
+              </div>
+              <div style={styles.budgetStatusCard}>
+                <h3 style={styles.budgetCardTitle}>Cost Breakdown</h3>
+                <p style={styles.budgetCardSub}>Per category (approved proposals only)</p>
+                {["Activity","Lodging","Transportation","Food","Other"].map(cat => {
+                  const amt = budgetSummary.breakdown[cat] || 0;
+                  const pct = spent > 0 ? (amt / spent) * 100 : 0;
+                  return (
+                    <div key={cat}>
+                      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", margin:"12px 0 4px"}}>
+                        <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                          <div style={styles.catIconCircle}>{CATEGORY_ICON[cat] || "📌"}</div>
+                          <span style={{fontSize:"14px", color:C.darkBrown}}>{cat}</span>
+                        </div>
+                        <span style={{fontSize:"14px", color:C.darkBrown}}>${amt.toFixed(2)}</span>
+                      </div>
+                      <div style={styles.progressBar}>
+                        <div style={{...styles.progressFill, width:`${pct}%`}} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
-
+          );
+        })()}
         {showInviteModal && (
           <InviteModal
             trip={trip}
@@ -508,7 +753,7 @@ export default function TripDetail({ trip, user, onBack, onOpenSettings, onLogou
           onCreated={() => { loadPolls(); setShowPollModal(false); }}
         />
       )}
-{editingProposal && (        
+      {editingProposal && (        
         <EditProposalModal
           proposal={editingProposal}
           tripStart={trip.START_DATE}

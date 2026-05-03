@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 from db import db
 import sys
@@ -82,7 +81,7 @@ def edit_proposal(proposal_id):
         if data.get("end_datetime"):
             proposal.end_datetime = datetime.fromisoformat(data["end_datetime"])
         db.session.commit()
-        return jsonify({"message": "Proposal updated"})
+        return jsonify({"message": "Proposal created", "proposalid": proposal.proposalid}), 201
     except Exception as e:
         db.session.rollback()
         print("EDIT PROPOSAL ERROR:", e)
@@ -130,6 +129,4 @@ def delete_proposal(proposal_id):
         db.session.rollback()
         print("DELETE PROPOSAL ERROR:", e)
         return jsonify({"error": str(e)}), 500
-
-
 
